@@ -1,5 +1,136 @@
 package main
 
+import (
+	"context"
+	"fmt"
+	"log"
+	"net"
+	"os"
+	"sync"
+	"time"
+
+	"github.com/BurkeyLai/Trading-Bot/server/environment"
+	"github.com/BurkeyLai/Trading-Bot/server/exchanges"
+	"github.com/BurkeyLai/Trading-Bot/server/proto"
+	"google.golang.org/grpc"
+	glog "google.golang.org/grpc/grpclog"
+)
+
+var grpcLog glog.LoggerV2
+var mu sync.Mutex
+
+const (
+	WAIT = "wait"
+)
+
+func init() {
+
+	grpcLog = glog.NewLoggerV2(os.Stdout, os.Stdout, os.Stdout)
+
+}
+
+type Connection struct {
+	stream    proto.TradingBot_CreateStreamServer
+	user      *proto.User
+	active    bool
+	exchanges map[string]*exchanges.HuobiWrapper //map[string]exchanges.ExchangeWrapper
+	error     chan error
+}
+
+type Server struct {
+	Connections map[string]*Connection
+}
+
+func executeStartCommand() *exchanges.HuobiWrapper {
+	fmt.Print("Getting exchange info ... ")
+	//wrappers := make([]exchanges.ExchangeWrapper, len(botConfig.ExchangeConfigs))
+	//for i, config := range botConfig.ExchangeConfigs {
+	//	wrappers[i] = helpers.InitExchange(config, botConfig.SimulationModeOn, config.FakeBalances, config.DepositAddresses)
+	//}
+	exchangeConfig := &environment.ExchangeConfig{
+		PublicKey:        "12e1r12e",
+		SecretKey:        "efwefwef",
+		DepositAddresses: make(map[string]string),
+	}
+	exchangeConfig.DepositAddresses["BTC"] = "kfjspar3"
+
+	var exch *exchanges.HuobiWrapper
+	exch = exchanges.NewHuobiWrapper(exchangeConfig.PublicKey, exchangeConfig.SecretKey, exchangeConfig.DepositAddresses)
+
+	fmt.Println("DONE")
+
+	return exch
+}
+
+func (s *Server) CreateStream(pconn *proto.Connect, stream proto.TradingBot_CreateStreamServer) error {
+	conn := &Connection{
+		stream:    stream,
+		user:      pconn.User,
+		active:    true,
+		exchanges: make(map[string]*exchanges.HuobiWrapper),
+		error:     make(chan error),
+	}
+	conn.exchanges["Huobi"] = executeStartCommand()
+	s.Connections[conn.user.Id] = conn
+
+	msg := &proto.Message{
+		User: &proto.User{
+			Id:   conn.user.Id,
+			Name: conn.user.Name,
+		},
+		Content:   "Create stream finished!",
+		Timestamp: time.Now().String(),
+	}
+	stream.Send(msg)
+
+	return <-conn.error
+}
+
+func (s *Server) MarketInfo(ctx context.Context, msg *proto.Message) (*proto.Close, error) {
+	fmt.Println(msg.Content)
+	conn := s.Connections[msg.User.Id]
+	wrapper := conn.exchanges["Huobi"]
+	markets, err := wrapper.GetMarkets()
+	if err != nil {
+		return &proto.Close{}, err
+	}
+
+	for _, market := range markets {
+		fmt.Printf("{" + market.Name + ": [" + market.BaseCurrency + ", " + market.MarketCurrency + "]} ")
+	}
+
+	info := &proto.Message{
+		User: &proto.User{
+			Id:   conn.user.Id,
+			Name: conn.user.Name,
+		},
+		Content:   "Info received!",
+		Timestamp: time.Now().String(),
+	}
+	conn.stream.Send(info)
+
+	return &proto.Close{}, nil
+}
+
+func main() {
+
+	server := &Server{make(map[string]*Connection)}
+	//init_conn := make(*Connection)
+	//server.Connections["Normal"] = init_conn
+
+	grpcServer := grpc.NewServer()
+	listener, err := net.Listen("tcp", ":9090")
+	if err != nil {
+		log.Fatalf("error creating the server %v", err)
+	}
+
+	//grpcLog.Info("Starting server at port :8080")
+	grpcLog.Info("Starting server at port :9090")
+
+	proto.RegisterTradingBotServer(grpcServer, server)
+	grpcServer.Serve(listener)
+}
+
 /*
 var grpcLog glog.LoggerV2
 var redisClient *redis.Client

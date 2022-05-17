@@ -1,15 +1,6 @@
 package main
 
-import (
-	"fmt"
-	"sync"
-	"time"
-
-	"github.com/BurkeyLai/gotunnel/server/proto"
-
-	"github.com/google/uuid"
-)
-
+/*
 var client proto.BroadcastClient
 
 const (
@@ -169,3 +160,4 @@ func (tunnel *Tunnel) notifyClientLeft(conn *Connection) {
 	fmt.Println(msg)
 	tunnel.broadcastToClientsInTunnel(msg)
 }
+*/

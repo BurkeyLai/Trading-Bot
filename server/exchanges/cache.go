@@ -1,9 +1,9 @@
-package main
+package exchanges
 
 import (
 	"sync"
 
-	"github.com/saniales/golang-crypto-trading-bot/environment"
+	"github.com/BurkeyLai/Trading-Bot/server/environment"
 )
 
 // SummaryCache represents a local summary cache for every exchange. To allow dinamic polling from multiple sources (REST + Websocket)
