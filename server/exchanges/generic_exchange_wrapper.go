@@ -19,6 +19,7 @@ import (
 	"errors"
 
 	"github.com/BurkeyLai/Trading-Bot/server/environment"
+	"github.com/adshao/go-binance/v2"
 	"github.com/shopspring/decimal"
 )
 
@@ -34,7 +35,8 @@ const (
 
 //ExchangeWrapper provides a generic wrapper for exchange services.
 type ExchangeWrapper interface {
-	Name() string                                                                    // Gets the name of the exchange.
+	Name() string // Gets the name of the exchange.
+	GetMarkets(mode string) ([]*environment.Market, error)
 	GetCandles(market *environment.Market) ([]environment.CandleStick, error)        // Gets the candle data from the exchange.
 	GetMarketSummary(market *environment.Market) (*environment.MarketSummary, error) // Gets the current market summary.
 	GetOrderBook(market *environment.Market) (*environment.OrderBook, error)         // Gets the order(ASK + BID) book of a market.
@@ -47,13 +49,13 @@ type ExchangeWrapper interface {
 	CalculateTradingFees(market *environment.Market, amount float64, limit float64, orderType TradeType) float64 // Calculates the trading fees for an order on a specified market.
 	CalculateWithdrawFees(market *environment.Market, amount float64) float64                                    // Calculates the withdrawal fees on a specified market.
 
-	GetBalance(symbol string) (*decimal.Decimal, error) // Gets the balance of the user of the specified currency.
-	GetDepositAddress(coinTicker string) (string, bool) // Gets the deposit address for the specified coin on the exchange, if exists.
+	GetBalance(mode, symbol string) (*decimal.Decimal, error) // Gets the balance of the user of the specified currency.
+	GetDepositAddress(coinTicker string) (string, bool)       // Gets the deposit address for the specified coin on the exchange, if exists.
 
 	FeedConnect(markets []*environment.Market) error // Connects to the feed of the exchange.
 
 	Withdraw(destinationAddress string, coinTicker string, amount float64) error // Performs a withdraw operation from the exchange to a destination address.
-
+	AskOrderList(mode string, market *environment.Market) ([]*binance.Order, error)
 	String() string // Returns a string representation of the object.
 }
 

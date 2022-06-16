@@ -20,8 +20,10 @@ func InitExchange(exchangeConfig environment.ExchangeConfig, simulatedMode bool,
 	//	exch = exchanges.NewBittrexV2Wrapper(exchangeConfig.PublicKey, exchangeConfig.SecretKey, depositAddresses)
 	//case "poloniex":
 	//	exch = exchanges.NewPoloniexWrapper(exchangeConfig.PublicKey, exchangeConfig.SecretKey, depositAddresses)
-	case "binance":
-		exch = exchanges.NewBinanceWrapper(exchangeConfig.PublicKey, exchangeConfig.SecretKey, depositAddresses)
+	case "Binance":
+		exch = exchanges.NewBinanceWrapper(exchangeConfig.SpotPublicKey, exchangeConfig.SpotSecretKey, exchangeConfig.FuturePublicKey, exchangeConfig.FutureSecretKey, depositAddresses)
+	case "Huobi":
+		exch = exchanges.NewHuobiWrapper(exchangeConfig.SpotPublicKey, exchangeConfig.SpotSecretKey, exchangeConfig.FuturePublicKey, exchangeConfig.FutureSecretKey, depositAddresses)
 	//case "bitfinex":
 	//	exch = exchanges.NewBitfinexWrapper(exchangeConfig.PublicKey, exchangeConfig.SecretKey, depositAddresses)
 	//case "hitbtc":

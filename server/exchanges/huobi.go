@@ -1,14 +1,28 @@
 package exchanges
 
 import (
+	"errors"
+	"fmt"
+
 	"github.com/BurkeyLai/Trading-Bot/server/environment"
+	"github.com/adshao/go-binance/v2"
 	"github.com/huobirdcenter/huobi_golang/config"
 	"github.com/huobirdcenter/huobi_golang/pkg/client"
+	"github.com/huobirdcenter/huobi_golang/pkg/model/market"
+	"github.com/huobirdcenter/huobi_golang/pkg/model/order"
+	"github.com/huobirdcenter/huobi_golang/pkg/model/wallet"
+	"github.com/shopspring/decimal"
+	"github.com/sirupsen/logrus"
 )
 
-// HuobiWrapper represents the wrapper for the Binance exchange.
+// HuobiWrapper represents the wrapper for the Huobi exchange.
 type HuobiWrapper struct {
 	apiCommon        *client.CommonClient
+	apiOrder         *client.OrderClient
+	apiMarket        *client.MarketClient
+	apiAccount       *client.AccountClient
+	apiWallet        *client.WalletClient
+	accountId        string
 	summaries        *SummaryCache
 	candles          *CandlesCache
 	orderbook        *OrderbookCache
@@ -17,11 +31,25 @@ type HuobiWrapper struct {
 }
 
 // NewHuobiWrapper creates a generic wrapper of the Huobi API.
-//func NewHuobiWrapper(publicKey string, secretKey string, depositAddresses map[string]string) ExchangeWrapper {
-func NewHuobiWrapper(publicKey string, secretKey string, depositAddresses map[string]string) *HuobiWrapper {
+func NewHuobiWrapper(spotPublicKey, spotSecretKey, futurePublicKey, futureSecretKey string, depositAddresses map[string]string) ExchangeWrapper {
+	//func NewHuobiWrapper(publicKey string, secretKey string, depositAddresses map[string]string) *HuobiWrapper {
+	api := new(client.AccountClient).Init(spotPublicKey, spotSecretKey, config.Host)
+	resp, err := api.GetAccountInfo()
+	var accountId string
+	if err != nil {
+		fmt.Println(err)
+		return nil
+	} else {
+		accountId = fmt.Sprint(resp[0].Id)
+	}
 
 	return &HuobiWrapper{
-		apiCommon:        new(client.CommonClient).Init(config.Host),
+		apiCommon:        new(client.CommonClient).Init(config.Host), // config.Host = "api.huobi.pro" 為現貨網
+		apiOrder:         new(client.OrderClient).Init(spotPublicKey, spotSecretKey, config.Host),
+		apiMarket:        new(client.MarketClient).Init(config.Host),
+		apiAccount:       new(client.AccountClient).Init(spotPublicKey, spotSecretKey, config.Host),
+		apiWallet:        new(client.WalletClient).Init(spotPublicKey, spotSecretKey, config.Host),
+		accountId:        accountId,
 		summaries:        NewSummaryCache(),
 		candles:          NewCandlesCache(),
 		orderbook:        NewOrderbookCache(),
@@ -40,15 +68,7 @@ func (wrapper *HuobiWrapper) String() string {
 }
 
 // GetMarkets Gets all the markets info.
-func (wrapper *HuobiWrapper) GetMarkets() ([]*environment.Market, error) {
-
-	//binanceSummary, err := wrapper.api.NewListPriceChangeStatsService().Symbol(MarketNameFor(market, wrapper)).Do(context.Background())
-	//if err != nil {
-	//	return nil, err
-	//}
-	// Get the timestamp from Huobi server and print on console
-
-	//wrapper.apiCommon = new(client.CommonClient).Init(config.Host)
+func (wrapper *HuobiWrapper) GetMarkets(mode string) ([]*environment.Market, error) {
 	api := wrapper.apiCommon
 	//systemstatus, err := api.GetSystemStatus()
 	//if err != nil {
@@ -85,66 +105,79 @@ func (wrapper *HuobiWrapper) GetMarkets() ([]*environment.Market, error) {
 	return ret, nil
 }
 
-/*
-// HuobiWrapper represents the wrapper for the Binance exchange.
-type HuobiWrapper struct {
-	api              *client
-	summaries        *SummaryCache
-	candles          *CandlesCache
-	orderbook        *OrderbookCache
-	depositAddresses map[string]string
-	websocketOn      bool
-}
-
-// Name returns the name of the wrapped exchange.
-func (wrapper *HuobiWrapper) Name() string {
-	return "binance"
-}
-
-func (wrapper *HuobiWrapper) String() string {
-	return wrapper.Name()
-}
-
 // BuyLimit performs a limit buy action.
 func (wrapper *HuobiWrapper) BuyLimit(market *environment.Market, amount float64, limit float64) (string, error) {
-	orderNumber, err := wrapper.api.NewCreateOrderService().Type(binance.OrderTypeLimit).Side(binance.SideTypeBuy).Symbol(MarketNameFor(market, wrapper)).Price(fmt.Sprint(limit)).Quantity(fmt.Sprint(amount)).Do(context.Background())
-	if err != nil {
-		return "", err
+	api := wrapper.apiOrder
+	request := order.PlaceOrderRequest{
+		AccountId: wrapper.accountId,
+		Type:      "buy-limit",
+		Source:    "spot-api",
+		Symbol:    market.Name,
+		Price:     fmt.Sprint(limit),
+		Amount:    fmt.Sprint(amount),
 	}
-	return orderNumber.ClientOrderID, nil
+	resp, err := api.PlaceOrder(&request)
+	if err != nil {
+		return resp.ErrorCode + ": " + resp.ErrorMessage, err
+	}
+	return resp.Data, nil //The returned data object is a single string which represents the order id
 }
 
 // SellLimit performs a limit sell action.
 func (wrapper *HuobiWrapper) SellLimit(market *environment.Market, amount float64, limit float64) (string, error) {
-	orderNumber, err := wrapper.api.NewCreateOrderService().Type(binance.OrderTypeLimit).Side(binance.SideTypeSell).Symbol(MarketNameFor(market, wrapper)).Price(fmt.Sprint(limit)).Quantity(fmt.Sprint(amount)).Do(context.Background())
-	if err != nil {
-		return "", err
+	api := wrapper.apiOrder
+	request := order.PlaceOrderRequest{
+		AccountId: wrapper.accountId,
+		Type:      "sell-limit",
+		Source:    "spot-api",
+		Symbol:    market.Name,
+		Price:     fmt.Sprint(limit),
+		Amount:    fmt.Sprint(amount),
 	}
-	return orderNumber.ClientOrderID, nil
+	resp, err := api.PlaceOrder(&request)
+	if err != nil {
+		return resp.ErrorCode + ": " + resp.ErrorMessage, err
+	}
+	return resp.Data, nil
 }
 
 // BuyMarket performs a market buy action.
 func (wrapper *HuobiWrapper) BuyMarket(market *environment.Market, amount float64) (string, error) {
-	orderNumber, err := wrapper.api.NewCreateOrderService().Type(binance.OrderTypeMarket).Side(binance.SideTypeBuy).Symbol(MarketNameFor(market, wrapper)).Quantity(fmt.Sprint(amount)).Do(context.Background())
-	if err != nil {
-		return "", err
+	api := wrapper.apiOrder
+	request := order.PlaceOrderRequest{
+		AccountId: wrapper.accountId,
+		Type:      "buy-market",
+		Source:    "spot-api",
+		Symbol:    market.Name,
+		Amount:    fmt.Sprint(amount),
 	}
-
-	return orderNumber.ClientOrderID, nil
+	resp, err := api.PlaceOrder(&request)
+	if err != nil {
+		return resp.ErrorCode + ": " + resp.ErrorMessage, err
+	}
+	return resp.Data, nil
 }
 
 // SellMarket performs a market sell action.
 func (wrapper *HuobiWrapper) SellMarket(market *environment.Market, amount float64) (string, error) {
-	orderNumber, err := wrapper.api.NewCreateOrderService().Type(binance.OrderTypeMarket).Side(binance.SideTypeSell).Symbol(MarketNameFor(market, wrapper)).Quantity(fmt.Sprint(amount)).Do(context.Background())
-	if err != nil {
-		return "", err
+	api := wrapper.apiOrder
+	request := order.PlaceOrderRequest{
+		AccountId: wrapper.accountId,
+		Type:      "sell-market",
+		Source:    "spot-api",
+		Symbol:    market.Name,
+		Amount:    fmt.Sprint(amount),
 	}
-	return orderNumber.ClientOrderID, nil
+	resp, err := api.PlaceOrder(&request)
+	if err != nil {
+		return resp.ErrorCode + ": " + resp.ErrorMessage, err
+	}
+	return resp.Data, nil
 }
 
 // CalculateTradingFees calculates the trading fees for an order on a specified market.
 //
-//     NOTE: In Binance fees are currently hardcoded.
+//     NOTE: In Huobi fees are currently hardcoded.
 func (wrapper *HuobiWrapper) CalculateTradingFees(market *environment.Market, amount float64, limit float64, orderType TradeType) float64 {
 	var feePercentage float64
 	if orderType == MakerTrade {
@@ -179,6 +212,7 @@ func (wrapper *HuobiWrapper) FeedConnect(markets []*environment.Market) error {
 
 // SubscribeMarketSummaryFeed subscribes to the Market Summary Feed service.
 func (wrapper *HuobiWrapper) subscribeMarketSummaryFeed(market *environment.Market) error {
+	//market.$symbol.ticker
 	_, _, err := binance.WsMarketStatServe(MarketNameFor(market, wrapper), func(event *binance.WsMarketStatEvent) {
 		high, _ := decimal.NewFromString(event.HighPrice)
 		low, _ := decimal.NewFromString(event.LowPrice)
@@ -253,21 +287,23 @@ func (wrapper *HuobiWrapper) subscribeOrderbookFeed(market *environment.Market) 
 	}()
 }
 
-func (wrapper *HuobiWrapper) orderbookFromREST(market *environment.Market) (*environment.OrderBook, int64, error) {
-	binanceOrderBook, err := wrapper.api.NewDepthService().Symbol(MarketNameFor(market, wrapper)).Do(context.Background())
+func (wrapper *HuobiWrapper) orderbookFromREST(m *environment.Market) (*environment.OrderBook, int64, error) {
+	api := wrapper.apiMarket
+	optionalRequest := market.GetDepthOptionalRequest{Size: 10}
+	resp, err := api.GetDepth(m.Name, market.STEP0, optionalRequest)
 	if err != nil {
 		return nil, -1, err
 	}
 
 	var orderBook environment.OrderBook
 
-	for _, ask := range binanceOrderBook.Asks {
-		qty, err := decimal.NewFromString(ask.Quantity)
+	for _, ask := range resp.Asks {
+		value, err := decimal.NewFromString(ask[0].String())
 		if err != nil {
 			return nil, -1, err
 		}
 
-		value, err := decimal.NewFromString(ask.Price)
+		qty, err := decimal.NewFromString(ask[1].String())
 		if err != nil {
 			return nil, -1, err
 		}
@@ -278,13 +314,13 @@ func (wrapper *HuobiWrapper) orderbookFromREST(market *environment.Market) (*env
 		})
 	}
 
-	for _, bid := range binanceOrderBook.Bids {
-		qty, err := decimal.NewFromString(bid.Quantity)
+	for _, bid := range resp.Bids {
+		value, err := decimal.NewFromString(bid[0].String())
 		if err != nil {
 			return nil, -1, err
 		}
 
-		value, err := decimal.NewFromString(bid.Price)
+		qty, err := decimal.NewFromString(bid[1].String())
 		if err != nil {
 			return nil, -1, err
 		}
@@ -295,27 +331,35 @@ func (wrapper *HuobiWrapper) orderbookFromREST(market *environment.Market) (*env
 		})
 	}
 
-	return &orderBook, binanceOrderBook.LastUpdateID, nil
+	//return &orderBook, resp.Version, nil
+	return &orderBook, resp.Timestamp, nil
 }
 
 // GetBalance gets the balance of the user of the specified currency.
-func (wrapper *HuobiWrapper) GetBalance(symbol string) (*decimal.Decimal, error) {
-	binanceAccount, err := wrapper.api.NewGetAccountService().Do(context.Background())
-	if err != nil {
-		return nil, err
-	}
+func (wrapper *HuobiWrapper) GetBalance(mode, symbol string) (*decimal.Decimal, error) {
 
-	for _, binanceBalance := range binanceAccount.Balances {
-		if binanceBalance.Asset == symbol {
-			ret, err := decimal.NewFromString(binanceBalance.Free)
-			if err != nil {
-				return nil, err
+	api := wrapper.apiAccount
+	resp, err := api.GetAccountBalance(wrapper.accountId)
+	if err != nil {
+		return nil, errors.New("Get account balance error: " + err.Error())
+	} else {
+		fmt.Printf("Get account balance: id=%d, type=%s, state=%s, count=%d",
+			resp.Id, resp.Type, resp.State, len(resp.List))
+		if resp.List != nil {
+			for _, result := range resp.List {
+				if result.Currency == symbol {
+					ret, err := decimal.NewFromString(result.Balance)
+					if err != nil {
+						return nil, err
+					}
+					return &ret, nil
+				}
 			}
-			return &ret, nil
 		}
 	}
 
 	return nil, errors.New("Symbol not found")
+
 }
 
 // GetDepositAddress gets the deposit address for the specified coin on the exchange.
@@ -327,16 +371,17 @@ func (wrapper *HuobiWrapper) GetDepositAddress(coinTicker string) (string, bool)
 // GetMarketSummary gets the current market summary.
 func (wrapper *HuobiWrapper) GetMarketSummary(market *environment.Market) (*environment.MarketSummary, error) {
 	if !wrapper.websocketOn {
-		binanceSummary, err := wrapper.api.NewListPriceChangeStatsService().Symbol(MarketNameFor(market, wrapper)).Do(context.Background())
+		api := wrapper.apiMarket
+		resp, err := api.GetLast24hCandlestickAskBid(market.Name)
 		if err != nil {
 			return nil, err
 		}
 
-		ask, _ := decimal.NewFromString(binanceSummary[0].AskPrice)
-		bid, _ := decimal.NewFromString(binanceSummary[0].BidPrice)
-		high, _ := decimal.NewFromString(binanceSummary[0].HighPrice)
-		low, _ := decimal.NewFromString(binanceSummary[0].LowPrice)
-		volume, _ := decimal.NewFromString(binanceSummary[0].Volume)
+		ask, _ := decimal.NewFromString(resp.Ask[0].String())
+		bid, _ := decimal.NewFromString(resp.Bid[0].String())
+		high, _ := decimal.NewFromString(resp.High.String())
+		low, _ := decimal.NewFromString(resp.Low.String())
+		volume, _ := decimal.NewFromString(resp.Vol.String())
 
 		wrapper.summaries.Set(market, &environment.MarketSummary{
 			Last:   ask,
@@ -357,21 +402,23 @@ func (wrapper *HuobiWrapper) GetMarketSummary(market *environment.Market) (*envi
 }
 
 // GetCandles gets the candle data from the exchange.
-func (wrapper *HuobiWrapper) GetCandles(market *environment.Market) ([]environment.CandleStick, error) {
+func (wrapper *HuobiWrapper) GetCandles(m *environment.Market) ([]environment.CandleStick, error) {
 	if !wrapper.websocketOn {
-		binanceCandles, err := wrapper.api.NewKlinesService().Symbol(MarketNameFor(market, wrapper)).Do(context.Background())
+		api := wrapper.apiMarket
+		optionalRequest := market.GetCandlestickOptionalRequest{Period: market.MIN1, Size: 10}
+		resp, err := api.GetCandlestick(m.Name, optionalRequest)
 		if err != nil {
 			return nil, err
 		}
 
-		ret := make([]environment.CandleStick, len(binanceCandles))
+		ret := make([]environment.CandleStick, len(resp))
 
-		for i, binanceCandle := range binanceCandles {
-			high, _ := decimal.NewFromString(binanceCandle.High)
-			open, _ := decimal.NewFromString(binanceCandle.Open)
-			close, _ := decimal.NewFromString(binanceCandle.Close)
-			low, _ := decimal.NewFromString(binanceCandle.Low)
-			volume, _ := decimal.NewFromString(binanceCandle.Volume)
+		for i, kline := range resp {
+			high, _ := decimal.NewFromString(kline.High.String())
+			open, _ := decimal.NewFromString(kline.Open.String())
+			close, _ := decimal.NewFromString(kline.Close.String())
+			low, _ := decimal.NewFromString(kline.Low.String())
+			volume, _ := decimal.NewFromString(kline.Vol.String())
 
 			ret[i] = environment.CandleStick{
 				High:   high,
@@ -382,10 +429,10 @@ func (wrapper *HuobiWrapper) GetCandles(market *environment.Market) ([]environme
 			}
 		}
 
-		wrapper.candles.Set(market, ret)
+		wrapper.candles.Set(m, ret)
 	}
 
-	ret, candleLoaded := wrapper.candles.Get(market)
+	ret, candleLoaded := wrapper.candles.Get(m)
 	if !candleLoaded {
 		return nil, errors.New("No candle data yet")
 	}
@@ -415,11 +462,30 @@ func (wrapper *HuobiWrapper) GetOrderBook(market *environment.Market) (*environm
 
 // Withdraw performs a withdraw operation from the exchange to a destination address.
 func (wrapper *HuobiWrapper) Withdraw(destinationAddress string, coinTicker string, amount float64) error {
-	_, err := wrapper.api.NewCreateWithdrawService().Address(destinationAddress).Coin(coinTicker).Amount(fmt.Sprint(amount)).Do(context.Background())
+
+	//_, err := wrapper.api.NewCreateWithdrawService().Address(destinationAddress).Coin(coinTicker).Amount(fmt.Sprint(amount)).Do(context.Background())
+	api := wrapper.apiWallet
+	createWithdrawRequest := wallet.CreateWithdrawRequest{
+		Address:  destinationAddress,
+		Amount:   fmt.Sprint(amount),
+		Currency: "usdt",
+		Fee:      "1.0"} //CalculateWithdrawFees
+	resp, err := api.CreateWithdraw(createWithdrawRequest)
 	if err != nil {
 		return err
 	}
+	fmt.Printf("Create withdraw request successfully: id=%d", resp)
 
 	return nil
 }
-*/
+
+func (wrapper *HuobiWrapper) AskOrderList(mode string, market *environment.Market) ([]*binance.Order, error) {
+	if mode == SPOT {
+
+		return nil, nil
+	} else {
+
+		return nil, nil
+	}
+
+}

@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/adshao/go-binance/v2"
 	"github.com/shopspring/decimal"
 )
 
@@ -35,7 +36,12 @@ type Market struct {
 	Name           string            `json:"name,required"`            //Represents the name of the market as defined in general (e.g. ETH-BTC).
 	BaseCurrency   string            `json:"baseCurrency,omitempty"`   //Represents the base currency of the market.
 	MarketCurrency string            `json:"marketCurrency,omitempty"` //Represents the currency to exchange by using base currency.
-	ExchangeNames  map[string]string `json:"-"`                        // Represents the various names of the market on various exchanges.
+	LotSizeMinQty  string            `json:"lotSizeMinQty,omitempty"`
+	LotSizeMaxQty  string            `json:"lotSizeMaxQty,omitempty"`
+	MinNotional    string            `json:"minNotional,omitempty"`
+	ExchangeNames  map[string]string `json:"-"` // Represents the various names of the market on various exchanges.
+	Summary        MarketSummary
+	Orders         []*binance.Order
 }
 
 func (m Market) String() string {

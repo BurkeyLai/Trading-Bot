@@ -4,9 +4,33 @@ package proto;
 
 option go_package = "./proto/";
 
+message DepositAddresses {
+    string addrnum = 1;
+    string btcaddr = 2;
+    string ethaddr = 3;
+}
+
+message Exchange {
+    string exchname = 1;
+    string spotpublickey = 2;
+    string spotsecretkey = 3;
+    string futurepublickey = 4;
+    string futuresecretkey = 5;
+    DepositAddresses depoaddr = 6;
+}
+
+message ExchangeConfig {
+    //string echnum = 1;
+    //Exchange ech1 = 2;
+    //Exchange ech2 = 3;
+    //Exchange ech3 = 4;
+    repeated Exchange exchs = 1;
+}
+
 message User {
     string id = 1;
     string name = 2;
+    ExchangeConfig exchcfg = 3;
 }
 
 message Connect {
@@ -16,17 +40,71 @@ message Connect {
 
 message Message {
     User user = 1;
+    BotInfo botinfo = 2;
+    string content = 3;
+    string timestamp = 4;
+}
+
+message BotInfo {
+    string exch = 1;
+    string mode = 2;
+    string modelname = 3;
+    string avgprice = 4;
+    repeated string orderidlist = 5;
+}
+
+message MarketInfoRequest {
+    Message msg = 1;
+    string mode = 2;
+    string exchange = 3;
+    string type = 4;
+}
+
+message MarketInfoRespond {
+    string timestamp = 1;
+    repeated string symbols = 2;
+}
+
+message CreateOrderRequest {
+    Message msg = 1;
+    string mode = 2;
+    string droppercent = 3;
+    string gouppercent = 4;
+    string exchange = 5;
+    string type = 6;
+    string symbol = 7;
+    string cycletype = 8;
+    string leverage = 9;
+    string maxdrawdown = 10;
+    string withdrawspot = 11;
+    string quantity = 12;
+}
+
+message CreateOrderRespond {
+    string timestamp = 1;
     string content = 2;
-    string timestamp = 3;
+    bool botactive = 3;
+}
+
+message AccountBalanceRequest {
+    Message msg = 1;
+    string mode = 2;
+    string exchange = 3;
+    string symbol = 4;
+}
+
+message AccountBalanceRespond {
+    string timestamp = 1;
+    string balance = 2;
 }
 
 message Close {}
 
 service TradingBot {
     rpc CreateStream(Connect) returns (stream Message) {}
-    rpc MarketInfo(Message) returns (Close) {}
+    rpc MarketInfo(MarketInfoRequest) returns (MarketInfoRespond) {}
+    rpc CreateOrder(CreateOrderRequest) returns (CreateOrderRespond) {}
+    rpc AccountBalance(AccountBalanceRequest) returns (AccountBalanceRespond) {}
 }
 
-//service ExchangeInfo {
-//    rpc MarketStatus(Message) returns (stream Message) {}
-//}
+// make build && cp proto/service.pb.go server/proto/

@@ -7,13 +7,20 @@ import (
 
 	"github.com/BurkeyLai/Trading-Bot/server/environment"
 	"github.com/adshao/go-binance/v2"
+	"github.com/adshao/go-binance/v2/futures"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
+)
+
+const (
+	SPOT   = "spot"
+	FUTURE = "future"
 )
 
 // BinanceWrapper represents the wrapper for the Binance exchange.
 type BinanceWrapper struct {
 	api              *binance.Client
+	future           *futures.Client
 	summaries        *SummaryCache
 	candles          *CandlesCache
 	orderbook        *OrderbookCache
@@ -22,10 +29,15 @@ type BinanceWrapper struct {
 }
 
 // NewBinanceWrapper creates a generic wrapper of the binance API.
-func NewBinanceWrapper(publicKey string, secretKey string, depositAddresses map[string]string) ExchangeWrapper {
-	client := binance.NewClient(publicKey, secretKey)
+func NewBinanceWrapper(spotPublicKey, spotSecretKey, futurePublicKey, futureSecretKey string, depositAddresses map[string]string) ExchangeWrapper {
+	binance.UseTestnet = true
+	futures.UseTestnet = true
+	client := binance.NewClient(spotPublicKey, spotSecretKey)
+	//future := futures.NewClient(publicKey, secretKey)
+	future := binance.NewFuturesClient(futurePublicKey, futureSecretKey)
 	return &BinanceWrapper{
 		api:              client,
+		future:           future,
 		summaries:        NewSummaryCache(),
 		candles:          NewCandlesCache(),
 		orderbook:        NewOrderbookCache(),
@@ -41,6 +53,48 @@ func (wrapper *BinanceWrapper) Name() string {
 
 func (wrapper *BinanceWrapper) String() string {
 	return wrapper.Name()
+}
+
+// GetMarkets Gets all the markets info.
+func (wrapper *BinanceWrapper) GetMarkets(mode string) ([]*environment.Market, error) {
+	//var symbolArray
+	if mode == SPOT {
+		binanceExchangeInfo, err := wrapper.api.NewExchangeInfoService().Do(context.Background())
+		if err != nil {
+			return nil, err
+		}
+		ret := make([]*environment.Market, len(binanceExchangeInfo.Symbols))
+
+		for i, market := range binanceExchangeInfo.Symbols {
+			ret[i] = &environment.Market{
+				Name:           market.Symbol,
+				BaseCurrency:   market.BaseAsset,
+				MarketCurrency: market.QuoteAsset,
+				LotSizeMinQty:  market.LotSizeFilter().MinQuantity,
+				LotSizeMaxQty:  market.LotSizeFilter().MaxQuantity,
+				MinNotional:    market.MinNotionalFilter().MinNotional,
+			}
+		}
+		return ret, nil
+	} else {
+		futureExchangeInfo, err := wrapper.future.NewExchangeInfoService().Do(context.Background())
+		if err != nil {
+			return nil, err
+		}
+		ret := make([]*environment.Market, len(futureExchangeInfo.Symbols))
+
+		for i, market := range futureExchangeInfo.Symbols {
+			ret[i] = &environment.Market{
+				Name:           market.Symbol,
+				BaseCurrency:   market.BaseAsset,
+				MarketCurrency: market.QuoteAsset,
+				LotSizeMinQty:  market.LotSizeFilter().MinQuantity,
+				LotSizeMaxQty:  market.LotSizeFilter().MaxQuantity,
+				MinNotional:    market.MinNotionalFilter().Notional,
+			}
+		}
+		return ret, nil
+	}
 }
 
 // BuyLimit performs a limit buy action.
@@ -69,6 +123,7 @@ func (wrapper *BinanceWrapper) BuyMarket(market *environment.Market, amount floa
 	}
 
 	return orderNumber.ClientOrderID, nil
+	//return fmt.Sprint(orderNumber.OrderID), nil
 }
 
 // SellMarket performs a market sell action.
@@ -237,23 +292,42 @@ func (wrapper *BinanceWrapper) orderbookFromREST(market *environment.Market) (*e
 }
 
 // GetBalance gets the balance of the user of the specified currency.
-func (wrapper *BinanceWrapper) GetBalance(symbol string) (*decimal.Decimal, error) {
-	binanceAccount, err := wrapper.api.NewGetAccountService().Do(context.Background())
-	if err != nil {
-		return nil, err
-	}
-
-	for _, binanceBalance := range binanceAccount.Balances {
-		if binanceBalance.Asset == symbol {
-			ret, err := decimal.NewFromString(binanceBalance.Free)
-			if err != nil {
-				return nil, err
-			}
-			return &ret, nil
+func (wrapper *BinanceWrapper) GetBalance(mode, symbol string) (*decimal.Decimal, error) {
+	if mode == SPOT {
+		binanceAccount, err := wrapper.api.NewGetAccountService().Do(context.Background())
+		if err != nil {
+			return nil, err
 		}
-	}
 
-	return nil, errors.New("Symbol not found")
+		for _, binanceBalance := range binanceAccount.Balances {
+			if binanceBalance.Asset == symbol {
+				ret, err := decimal.NewFromString(binanceBalance.Free)
+				if err != nil {
+					return nil, err
+				}
+				return &ret, nil
+			}
+		}
+		return nil, errors.New("Symbol not found")
+	} else {
+		futureAccount, err := wrapper.future.NewGetAccountService().Do(context.Background())
+		if err != nil {
+			return nil, err
+		}
+
+		//for _, binanceBalance := range futureAccount.Balances {
+		for _, asset := range futureAccount.Assets {
+			if asset.Asset == symbol {
+				ret, err := decimal.NewFromString(asset.WalletBalance)
+				if err != nil {
+					return nil, err
+				}
+				return &ret, nil
+			}
+		}
+
+		return nil, errors.New("Symbol not found")
+	}
 }
 
 // GetDepositAddress gets the deposit address for the specified coin on the exchange.
@@ -359,4 +433,21 @@ func (wrapper *BinanceWrapper) Withdraw(destinationAddress string, coinTicker st
 	}
 
 	return nil
+}
+
+func (wrapper *BinanceWrapper) AskOrderList(mode string, market *environment.Market) ([]*binance.Order, error) {
+	if mode == SPOT {
+		orders, err := wrapper.api.NewListOrdersService().Symbol(market.Name).Do(context.Background())
+		if err != nil {
+			fmt.Println(err)
+		}
+		//for _, o := range orders {
+		//	fmt.Println(o)
+		//}
+		return orders, nil
+	} else {
+
+		return nil, nil
+	}
+
 }

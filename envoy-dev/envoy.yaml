@@ -58,3 +58,6 @@ static_resources:
                     socket_address:
                       address: host.docker.internal
                       port_value: 9090
+
+# docker build -t envoy:test1 .
+# docker run -d --name envoy -p 8080:8080 -p 9901:9901 envoy:test1

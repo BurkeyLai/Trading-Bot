@@ -24,19 +24,221 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type DepositAddresses struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Addrnum string `protobuf:"bytes,1,opt,name=addrnum,proto3" json:"addrnum,omitempty"`
+	Btcaddr string `protobuf:"bytes,2,opt,name=btcaddr,proto3" json:"btcaddr,omitempty"`
+	Ethaddr string `protobuf:"bytes,3,opt,name=ethaddr,proto3" json:"ethaddr,omitempty"`
+}
+
+func (x *DepositAddresses) Reset() {
+	*x = DepositAddresses{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_service_proto_msgTypes[0]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *DepositAddresses) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DepositAddresses) ProtoMessage() {}
+
+func (x *DepositAddresses) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_service_proto_msgTypes[0]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DepositAddresses.ProtoReflect.Descriptor instead.
+func (*DepositAddresses) Descriptor() ([]byte, []int) {
+	return file_proto_service_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *DepositAddresses) GetAddrnum() string {
+	if x != nil {
+		return x.Addrnum
+	}
+	return ""
+}
+
+func (x *DepositAddresses) GetBtcaddr() string {
+	if x != nil {
+		return x.Btcaddr
+	}
+	return ""
+}
+
+func (x *DepositAddresses) GetEthaddr() string {
+	if x != nil {
+		return x.Ethaddr
+	}
+	return ""
+}
+
+type Exchange struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Exchname        string            `protobuf:"bytes,1,opt,name=exchname,proto3" json:"exchname,omitempty"`
+	Spotpublickey   string            `protobuf:"bytes,2,opt,name=spotpublickey,proto3" json:"spotpublickey,omitempty"`
+	Spotsecretkey   string            `protobuf:"bytes,3,opt,name=spotsecretkey,proto3" json:"spotsecretkey,omitempty"`
+	Futurepublickey string            `protobuf:"bytes,4,opt,name=futurepublickey,proto3" json:"futurepublickey,omitempty"`
+	Futuresecretkey string            `protobuf:"bytes,5,opt,name=futuresecretkey,proto3" json:"futuresecretkey,omitempty"`
+	Depoaddr        *DepositAddresses `protobuf:"bytes,6,opt,name=depoaddr,proto3" json:"depoaddr,omitempty"`
+}
+
+func (x *Exchange) Reset() {
+	*x = Exchange{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_service_proto_msgTypes[1]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *Exchange) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Exchange) ProtoMessage() {}
+
+func (x *Exchange) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_service_proto_msgTypes[1]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Exchange.ProtoReflect.Descriptor instead.
+func (*Exchange) Descriptor() ([]byte, []int) {
+	return file_proto_service_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *Exchange) GetExchname() string {
+	if x != nil {
+		return x.Exchname
+	}
+	return ""
+}
+
+func (x *Exchange) GetSpotpublickey() string {
+	if x != nil {
+		return x.Spotpublickey
+	}
+	return ""
+}
+
+func (x *Exchange) GetSpotsecretkey() string {
+	if x != nil {
+		return x.Spotsecretkey
+	}
+	return ""
+}
+
+func (x *Exchange) GetFuturepublickey() string {
+	if x != nil {
+		return x.Futurepublickey
+	}
+	return ""
+}
+
+func (x *Exchange) GetFuturesecretkey() string {
+	if x != nil {
+		return x.Futuresecretkey
+	}
+	return ""
+}
+
+func (x *Exchange) GetDepoaddr() *DepositAddresses {
+	if x != nil {
+		return x.Depoaddr
+	}
+	return nil
+}
+
+type ExchangeConfig struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	//string echnum = 1;
+	//Exchange ech1 = 2;
+	//Exchange ech2 = 3;
+	//Exchange ech3 = 4;
+	Exchs []*Exchange `protobuf:"bytes,1,rep,name=exchs,proto3" json:"exchs,omitempty"`
+}
+
+func (x *ExchangeConfig) Reset() {
+	*x = ExchangeConfig{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_service_proto_msgTypes[2]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ExchangeConfig) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ExchangeConfig) ProtoMessage() {}
+
+func (x *ExchangeConfig) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_service_proto_msgTypes[2]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ExchangeConfig.ProtoReflect.Descriptor instead.
+func (*ExchangeConfig) Descriptor() ([]byte, []int) {
+	return file_proto_service_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *ExchangeConfig) GetExchs() []*Exchange {
+	if x != nil {
+		return x.Exchs
+	}
+	return nil
+}
+
 type User struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Id      string          `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name    string          `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Exchcfg *ExchangeConfig `protobuf:"bytes,3,opt,name=exchcfg,proto3" json:"exchcfg,omitempty"`
 }
 
 func (x *User) Reset() {
 	*x = User{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_service_proto_msgTypes[0]
+		mi := &file_proto_service_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -49,7 +251,7 @@ func (x *User) String() string {
 func (*User) ProtoMessage() {}
 
 func (x *User) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_service_proto_msgTypes[0]
+	mi := &file_proto_service_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -62,7 +264,7 @@ func (x *User) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use User.ProtoReflect.Descriptor instead.
 func (*User) Descriptor() ([]byte, []int) {
-	return file_proto_service_proto_rawDescGZIP(), []int{0}
+	return file_proto_service_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *User) GetId() string {
@@ -79,6 +281,13 @@ func (x *User) GetName() string {
 	return ""
 }
 
+func (x *User) GetExchcfg() *ExchangeConfig {
+	if x != nil {
+		return x.Exchcfg
+	}
+	return nil
+}
+
 type Connect struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -91,7 +300,7 @@ type Connect struct {
 func (x *Connect) Reset() {
 	*x = Connect{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_service_proto_msgTypes[1]
+		mi := &file_proto_service_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -104,7 +313,7 @@ func (x *Connect) String() string {
 func (*Connect) ProtoMessage() {}
 
 func (x *Connect) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_service_proto_msgTypes[1]
+	mi := &file_proto_service_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -117,7 +326,7 @@ func (x *Connect) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Connect.ProtoReflect.Descriptor instead.
 func (*Connect) Descriptor() ([]byte, []int) {
-	return file_proto_service_proto_rawDescGZIP(), []int{1}
+	return file_proto_service_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *Connect) GetUser() *User {
@@ -139,15 +348,16 @@ type Message struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	User      *User  `protobuf:"bytes,1,opt,name=user,proto3" json:"user,omitempty"`
-	Content   string `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"`
-	Timestamp string `protobuf:"bytes,3,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	User      *User    `protobuf:"bytes,1,opt,name=user,proto3" json:"user,omitempty"`
+	Botinfo   *BotInfo `protobuf:"bytes,2,opt,name=botinfo,proto3" json:"botinfo,omitempty"`
+	Content   string   `protobuf:"bytes,3,opt,name=content,proto3" json:"content,omitempty"`
+	Timestamp string   `protobuf:"bytes,4,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
 }
 
 func (x *Message) Reset() {
 	*x = Message{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_service_proto_msgTypes[2]
+		mi := &file_proto_service_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -160,7 +370,7 @@ func (x *Message) String() string {
 func (*Message) ProtoMessage() {}
 
 func (x *Message) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_service_proto_msgTypes[2]
+	mi := &file_proto_service_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -173,12 +383,19 @@ func (x *Message) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Message.ProtoReflect.Descriptor instead.
 func (*Message) Descriptor() ([]byte, []int) {
-	return file_proto_service_proto_rawDescGZIP(), []int{2}
+	return file_proto_service_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *Message) GetUser() *User {
 	if x != nil {
 		return x.User
+	}
+	return nil
+}
+
+func (x *Message) GetBotinfo() *BotInfo {
+	if x != nil {
+		return x.Botinfo
 	}
 	return nil
 }
@@ -197,6 +414,535 @@ func (x *Message) GetTimestamp() string {
 	return ""
 }
 
+type BotInfo struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Exch        string   `protobuf:"bytes,1,opt,name=exch,proto3" json:"exch,omitempty"`
+	Mode        string   `protobuf:"bytes,2,opt,name=mode,proto3" json:"mode,omitempty"`
+	Modelname   string   `protobuf:"bytes,3,opt,name=modelname,proto3" json:"modelname,omitempty"`
+	Avgprice    string   `protobuf:"bytes,4,opt,name=avgprice,proto3" json:"avgprice,omitempty"`
+	Orderidlist []string `protobuf:"bytes,5,rep,name=orderidlist,proto3" json:"orderidlist,omitempty"`
+}
+
+func (x *BotInfo) Reset() {
+	*x = BotInfo{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_service_proto_msgTypes[6]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *BotInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BotInfo) ProtoMessage() {}
+
+func (x *BotInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_service_proto_msgTypes[6]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BotInfo.ProtoReflect.Descriptor instead.
+func (*BotInfo) Descriptor() ([]byte, []int) {
+	return file_proto_service_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *BotInfo) GetExch() string {
+	if x != nil {
+		return x.Exch
+	}
+	return ""
+}
+
+func (x *BotInfo) GetMode() string {
+	if x != nil {
+		return x.Mode
+	}
+	return ""
+}
+
+func (x *BotInfo) GetModelname() string {
+	if x != nil {
+		return x.Modelname
+	}
+	return ""
+}
+
+func (x *BotInfo) GetAvgprice() string {
+	if x != nil {
+		return x.Avgprice
+	}
+	return ""
+}
+
+func (x *BotInfo) GetOrderidlist() []string {
+	if x != nil {
+		return x.Orderidlist
+	}
+	return nil
+}
+
+type MarketInfoRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Msg      *Message `protobuf:"bytes,1,opt,name=msg,proto3" json:"msg,omitempty"`
+	Mode     string   `protobuf:"bytes,2,opt,name=mode,proto3" json:"mode,omitempty"`
+	Exchange string   `protobuf:"bytes,3,opt,name=exchange,proto3" json:"exchange,omitempty"`
+	Type     string   `protobuf:"bytes,4,opt,name=type,proto3" json:"type,omitempty"`
+}
+
+func (x *MarketInfoRequest) Reset() {
+	*x = MarketInfoRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_service_proto_msgTypes[7]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *MarketInfoRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MarketInfoRequest) ProtoMessage() {}
+
+func (x *MarketInfoRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_service_proto_msgTypes[7]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MarketInfoRequest.ProtoReflect.Descriptor instead.
+func (*MarketInfoRequest) Descriptor() ([]byte, []int) {
+	return file_proto_service_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *MarketInfoRequest) GetMsg() *Message {
+	if x != nil {
+		return x.Msg
+	}
+	return nil
+}
+
+func (x *MarketInfoRequest) GetMode() string {
+	if x != nil {
+		return x.Mode
+	}
+	return ""
+}
+
+func (x *MarketInfoRequest) GetExchange() string {
+	if x != nil {
+		return x.Exchange
+	}
+	return ""
+}
+
+func (x *MarketInfoRequest) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
+type MarketInfoRespond struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Timestamp string   `protobuf:"bytes,1,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	Symbols   []string `protobuf:"bytes,2,rep,name=symbols,proto3" json:"symbols,omitempty"`
+}
+
+func (x *MarketInfoRespond) Reset() {
+	*x = MarketInfoRespond{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_service_proto_msgTypes[8]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *MarketInfoRespond) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MarketInfoRespond) ProtoMessage() {}
+
+func (x *MarketInfoRespond) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_service_proto_msgTypes[8]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MarketInfoRespond.ProtoReflect.Descriptor instead.
+func (*MarketInfoRespond) Descriptor() ([]byte, []int) {
+	return file_proto_service_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *MarketInfoRespond) GetTimestamp() string {
+	if x != nil {
+		return x.Timestamp
+	}
+	return ""
+}
+
+func (x *MarketInfoRespond) GetSymbols() []string {
+	if x != nil {
+		return x.Symbols
+	}
+	return nil
+}
+
+type CreateOrderRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Msg          *Message `protobuf:"bytes,1,opt,name=msg,proto3" json:"msg,omitempty"`
+	Mode         string   `protobuf:"bytes,2,opt,name=mode,proto3" json:"mode,omitempty"`
+	Droppercent  string   `protobuf:"bytes,3,opt,name=droppercent,proto3" json:"droppercent,omitempty"`
+	Gouppercent  string   `protobuf:"bytes,4,opt,name=gouppercent,proto3" json:"gouppercent,omitempty"`
+	Exchange     string   `protobuf:"bytes,5,opt,name=exchange,proto3" json:"exchange,omitempty"`
+	Type         string   `protobuf:"bytes,6,opt,name=type,proto3" json:"type,omitempty"`
+	Symbol       string   `protobuf:"bytes,7,opt,name=symbol,proto3" json:"symbol,omitempty"`
+	Cycletype    string   `protobuf:"bytes,8,opt,name=cycletype,proto3" json:"cycletype,omitempty"`
+	Leverage     string   `protobuf:"bytes,9,opt,name=leverage,proto3" json:"leverage,omitempty"`
+	Maxdrawdown  string   `protobuf:"bytes,10,opt,name=maxdrawdown,proto3" json:"maxdrawdown,omitempty"`
+	Withdrawspot string   `protobuf:"bytes,11,opt,name=withdrawspot,proto3" json:"withdrawspot,omitempty"`
+	Quantity     string   `protobuf:"bytes,12,opt,name=quantity,proto3" json:"quantity,omitempty"`
+}
+
+func (x *CreateOrderRequest) Reset() {
+	*x = CreateOrderRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_service_proto_msgTypes[9]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *CreateOrderRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateOrderRequest) ProtoMessage() {}
+
+func (x *CreateOrderRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_service_proto_msgTypes[9]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateOrderRequest.ProtoReflect.Descriptor instead.
+func (*CreateOrderRequest) Descriptor() ([]byte, []int) {
+	return file_proto_service_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *CreateOrderRequest) GetMsg() *Message {
+	if x != nil {
+		return x.Msg
+	}
+	return nil
+}
+
+func (x *CreateOrderRequest) GetMode() string {
+	if x != nil {
+		return x.Mode
+	}
+	return ""
+}
+
+func (x *CreateOrderRequest) GetDroppercent() string {
+	if x != nil {
+		return x.Droppercent
+	}
+	return ""
+}
+
+func (x *CreateOrderRequest) GetGouppercent() string {
+	if x != nil {
+		return x.Gouppercent
+	}
+	return ""
+}
+
+func (x *CreateOrderRequest) GetExchange() string {
+	if x != nil {
+		return x.Exchange
+	}
+	return ""
+}
+
+func (x *CreateOrderRequest) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
+func (x *CreateOrderRequest) GetSymbol() string {
+	if x != nil {
+		return x.Symbol
+	}
+	return ""
+}
+
+func (x *CreateOrderRequest) GetCycletype() string {
+	if x != nil {
+		return x.Cycletype
+	}
+	return ""
+}
+
+func (x *CreateOrderRequest) GetLeverage() string {
+	if x != nil {
+		return x.Leverage
+	}
+	return ""
+}
+
+func (x *CreateOrderRequest) GetMaxdrawdown() string {
+	if x != nil {
+		return x.Maxdrawdown
+	}
+	return ""
+}
+
+func (x *CreateOrderRequest) GetWithdrawspot() string {
+	if x != nil {
+		return x.Withdrawspot
+	}
+	return ""
+}
+
+func (x *CreateOrderRequest) GetQuantity() string {
+	if x != nil {
+		return x.Quantity
+	}
+	return ""
+}
+
+type CreateOrderRespond struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Timestamp string `protobuf:"bytes,1,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	Content   string `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"`
+	Botactive bool   `protobuf:"varint,3,opt,name=botactive,proto3" json:"botactive,omitempty"`
+}
+
+func (x *CreateOrderRespond) Reset() {
+	*x = CreateOrderRespond{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_service_proto_msgTypes[10]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *CreateOrderRespond) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateOrderRespond) ProtoMessage() {}
+
+func (x *CreateOrderRespond) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_service_proto_msgTypes[10]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateOrderRespond.ProtoReflect.Descriptor instead.
+func (*CreateOrderRespond) Descriptor() ([]byte, []int) {
+	return file_proto_service_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *CreateOrderRespond) GetTimestamp() string {
+	if x != nil {
+		return x.Timestamp
+	}
+	return ""
+}
+
+func (x *CreateOrderRespond) GetContent() string {
+	if x != nil {
+		return x.Content
+	}
+	return ""
+}
+
+func (x *CreateOrderRespond) GetBotactive() bool {
+	if x != nil {
+		return x.Botactive
+	}
+	return false
+}
+
+type AccountBalanceRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Msg      *Message `protobuf:"bytes,1,opt,name=msg,proto3" json:"msg,omitempty"`
+	Mode     string   `protobuf:"bytes,2,opt,name=mode,proto3" json:"mode,omitempty"`
+	Exchange string   `protobuf:"bytes,3,opt,name=exchange,proto3" json:"exchange,omitempty"`
+	Symbol   string   `protobuf:"bytes,4,opt,name=symbol,proto3" json:"symbol,omitempty"`
+}
+
+func (x *AccountBalanceRequest) Reset() {
+	*x = AccountBalanceRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_service_proto_msgTypes[11]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *AccountBalanceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AccountBalanceRequest) ProtoMessage() {}
+
+func (x *AccountBalanceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_service_proto_msgTypes[11]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AccountBalanceRequest.ProtoReflect.Descriptor instead.
+func (*AccountBalanceRequest) Descriptor() ([]byte, []int) {
+	return file_proto_service_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *AccountBalanceRequest) GetMsg() *Message {
+	if x != nil {
+		return x.Msg
+	}
+	return nil
+}
+
+func (x *AccountBalanceRequest) GetMode() string {
+	if x != nil {
+		return x.Mode
+	}
+	return ""
+}
+
+func (x *AccountBalanceRequest) GetExchange() string {
+	if x != nil {
+		return x.Exchange
+	}
+	return ""
+}
+
+func (x *AccountBalanceRequest) GetSymbol() string {
+	if x != nil {
+		return x.Symbol
+	}
+	return ""
+}
+
+type AccountBalanceRespond struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Timestamp string `protobuf:"bytes,1,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	Balance   string `protobuf:"bytes,2,opt,name=balance,proto3" json:"balance,omitempty"`
+}
+
+func (x *AccountBalanceRespond) Reset() {
+	*x = AccountBalanceRespond{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_service_proto_msgTypes[12]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *AccountBalanceRespond) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AccountBalanceRespond) ProtoMessage() {}
+
+func (x *AccountBalanceRespond) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_service_proto_msgTypes[12]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AccountBalanceRespond.ProtoReflect.Descriptor instead.
+func (*AccountBalanceRespond) Descriptor() ([]byte, []int) {
+	return file_proto_service_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *AccountBalanceRespond) GetTimestamp() string {
+	if x != nil {
+		return x.Timestamp
+	}
+	return ""
+}
+
+func (x *AccountBalanceRespond) GetBalance() string {
+	if x != nil {
+		return x.Balance
+	}
+	return ""
+}
+
 type Close struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -206,7 +952,7 @@ type Close struct {
 func (x *Close) Reset() {
 	*x = Close{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_service_proto_msgTypes[3]
+		mi := &file_proto_service_proto_msgTypes[13]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -219,7 +965,7 @@ func (x *Close) String() string {
 func (*Close) ProtoMessage() {}
 
 func (x *Close) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_service_proto_msgTypes[3]
+	mi := &file_proto_service_proto_msgTypes[13]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -232,36 +978,143 @@ func (x *Close) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Close.ProtoReflect.Descriptor instead.
 func (*Close) Descriptor() ([]byte, []int) {
-	return file_proto_service_proto_rawDescGZIP(), []int{3}
+	return file_proto_service_proto_rawDescGZIP(), []int{13}
 }
 
 var File_proto_service_proto protoreflect.FileDescriptor
 
 var file_proto_service_proto_rawDesc = []byte{
 	0x0a, 0x13, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x2e,
-	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x05, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x2a, 0x0a, 0x04,
-	0x55, 0x73, 0x65, 0x72, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
-	0x52, 0x02, 0x69, 0x64, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01,
-	0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x22, 0x42, 0x0a, 0x07, 0x43, 0x6f, 0x6e, 0x6e,
-	0x65, 0x63, 0x74, 0x12, 0x1f, 0x0a, 0x04, 0x75, 0x73, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28,
-	0x0b, 0x32, 0x0b, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x55, 0x73, 0x65, 0x72, 0x52, 0x04,
-	0x75, 0x73, 0x65, 0x72, 0x12, 0x16, 0x0a, 0x06, 0x61, 0x63, 0x74, 0x69, 0x76, 0x65, 0x18, 0x02,
-	0x20, 0x01, 0x28, 0x08, 0x52, 0x06, 0x61, 0x63, 0x74, 0x69, 0x76, 0x65, 0x22, 0x62, 0x0a, 0x07,
-	0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x12, 0x1f, 0x0a, 0x04, 0x75, 0x73, 0x65, 0x72, 0x18,
-	0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0b, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x55, 0x73,
-	0x65, 0x72, 0x52, 0x04, 0x75, 0x73, 0x65, 0x72, 0x12, 0x18, 0x0a, 0x07, 0x63, 0x6f, 0x6e, 0x74,
-	0x65, 0x6e, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x63, 0x6f, 0x6e, 0x74, 0x65,
-	0x6e, 0x74, 0x12, 0x1c, 0x0a, 0x09, 0x74, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x18,
-	0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x74, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70,
-	0x22, 0x07, 0x0a, 0x05, 0x43, 0x6c, 0x6f, 0x73, 0x65, 0x32, 0x6e, 0x0a, 0x0a, 0x54, 0x72, 0x61,
-	0x64, 0x69, 0x6e, 0x67, 0x42, 0x6f, 0x74, 0x12, 0x32, 0x0a, 0x0c, 0x43, 0x72, 0x65, 0x61, 0x74,
-	0x65, 0x53, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x12, 0x0e, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e,
-	0x43, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x1a, 0x0e, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e,
-	0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x22, 0x00, 0x30, 0x01, 0x12, 0x2c, 0x0a, 0x0a, 0x4d,
-	0x61, 0x72, 0x6b, 0x65, 0x74, 0x49, 0x6e, 0x66, 0x6f, 0x12, 0x0e, 0x2e, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x2e, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x1a, 0x0c, 0x2e, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x2e, 0x43, 0x6c, 0x6f, 0x73, 0x65, 0x22, 0x00, 0x42, 0x0a, 0x5a, 0x08, 0x2e, 0x2f, 0x70,
-	0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x05, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x60, 0x0a, 0x10,
+	0x44, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x65, 0x73,
+	0x12, 0x18, 0x0a, 0x07, 0x61, 0x64, 0x64, 0x72, 0x6e, 0x75, 0x6d, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x07, 0x61, 0x64, 0x64, 0x72, 0x6e, 0x75, 0x6d, 0x12, 0x18, 0x0a, 0x07, 0x62, 0x74,
+	0x63, 0x61, 0x64, 0x64, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x62, 0x74, 0x63,
+	0x61, 0x64, 0x64, 0x72, 0x12, 0x18, 0x0a, 0x07, 0x65, 0x74, 0x68, 0x61, 0x64, 0x64, 0x72, 0x18,
+	0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x65, 0x74, 0x68, 0x61, 0x64, 0x64, 0x72, 0x22, 0xfb,
+	0x01, 0x0a, 0x08, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x12, 0x1a, 0x0a, 0x08, 0x65,
+	0x78, 0x63, 0x68, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x65,
+	0x78, 0x63, 0x68, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x24, 0x0a, 0x0d, 0x73, 0x70, 0x6f, 0x74, 0x70,
+	0x75, 0x62, 0x6c, 0x69, 0x63, 0x6b, 0x65, 0x79, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0d,
+	0x73, 0x70, 0x6f, 0x74, 0x70, 0x75, 0x62, 0x6c, 0x69, 0x63, 0x6b, 0x65, 0x79, 0x12, 0x24, 0x0a,
+	0x0d, 0x73, 0x70, 0x6f, 0x74, 0x73, 0x65, 0x63, 0x72, 0x65, 0x74, 0x6b, 0x65, 0x79, 0x18, 0x03,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x0d, 0x73, 0x70, 0x6f, 0x74, 0x73, 0x65, 0x63, 0x72, 0x65, 0x74,
+	0x6b, 0x65, 0x79, 0x12, 0x28, 0x0a, 0x0f, 0x66, 0x75, 0x74, 0x75, 0x72, 0x65, 0x70, 0x75, 0x62,
+	0x6c, 0x69, 0x63, 0x6b, 0x65, 0x79, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0f, 0x66, 0x75,
+	0x74, 0x75, 0x72, 0x65, 0x70, 0x75, 0x62, 0x6c, 0x69, 0x63, 0x6b, 0x65, 0x79, 0x12, 0x28, 0x0a,
+	0x0f, 0x66, 0x75, 0x74, 0x75, 0x72, 0x65, 0x73, 0x65, 0x63, 0x72, 0x65, 0x74, 0x6b, 0x65, 0x79,
+	0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0f, 0x66, 0x75, 0x74, 0x75, 0x72, 0x65, 0x73, 0x65,
+	0x63, 0x72, 0x65, 0x74, 0x6b, 0x65, 0x79, 0x12, 0x33, 0x0a, 0x08, 0x64, 0x65, 0x70, 0x6f, 0x61,
+	0x64, 0x64, 0x72, 0x18, 0x06, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x17, 0x2e, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x2e, 0x44, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73,
+	0x65, 0x73, 0x52, 0x08, 0x64, 0x65, 0x70, 0x6f, 0x61, 0x64, 0x64, 0x72, 0x22, 0x37, 0x0a, 0x0e,
+	0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x12, 0x25,
+	0x0a, 0x05, 0x65, 0x78, 0x63, 0x68, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x0f, 0x2e,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x52, 0x05,
+	0x65, 0x78, 0x63, 0x68, 0x73, 0x22, 0x5b, 0x0a, 0x04, 0x55, 0x73, 0x65, 0x72, 0x12, 0x0e, 0x0a,
+	0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x12, 0x12, 0x0a,
+	0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d,
+	0x65, 0x12, 0x2f, 0x0a, 0x07, 0x65, 0x78, 0x63, 0x68, 0x63, 0x66, 0x67, 0x18, 0x03, 0x20, 0x01,
+	0x28, 0x0b, 0x32, 0x15, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x45, 0x78, 0x63, 0x68, 0x61,
+	0x6e, 0x67, 0x65, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x52, 0x07, 0x65, 0x78, 0x63, 0x68, 0x63,
+	0x66, 0x67, 0x22, 0x42, 0x0a, 0x07, 0x43, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x12, 0x1f, 0x0a,
+	0x04, 0x75, 0x73, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0b, 0x2e, 0x70, 0x72,
+	0x6f, 0x74, 0x6f, 0x2e, 0x55, 0x73, 0x65, 0x72, 0x52, 0x04, 0x75, 0x73, 0x65, 0x72, 0x12, 0x16,
+	0x0a, 0x06, 0x61, 0x63, 0x74, 0x69, 0x76, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x08, 0x52, 0x06,
+	0x61, 0x63, 0x74, 0x69, 0x76, 0x65, 0x22, 0x8c, 0x01, 0x0a, 0x07, 0x4d, 0x65, 0x73, 0x73, 0x61,
+	0x67, 0x65, 0x12, 0x1f, 0x0a, 0x04, 0x75, 0x73, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b,
+	0x32, 0x0b, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x55, 0x73, 0x65, 0x72, 0x52, 0x04, 0x75,
+	0x73, 0x65, 0x72, 0x12, 0x28, 0x0a, 0x07, 0x62, 0x6f, 0x74, 0x69, 0x6e, 0x66, 0x6f, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x0b, 0x32, 0x0e, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x42, 0x6f, 0x74,
+	0x49, 0x6e, 0x66, 0x6f, 0x52, 0x07, 0x62, 0x6f, 0x74, 0x69, 0x6e, 0x66, 0x6f, 0x12, 0x18, 0x0a,
+	0x07, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07,
+	0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x12, 0x1c, 0x0a, 0x09, 0x74, 0x69, 0x6d, 0x65, 0x73,
+	0x74, 0x61, 0x6d, 0x70, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x74, 0x69, 0x6d, 0x65,
+	0x73, 0x74, 0x61, 0x6d, 0x70, 0x22, 0x8d, 0x01, 0x0a, 0x07, 0x42, 0x6f, 0x74, 0x49, 0x6e, 0x66,
+	0x6f, 0x12, 0x12, 0x0a, 0x04, 0x65, 0x78, 0x63, 0x68, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x04, 0x65, 0x78, 0x63, 0x68, 0x12, 0x12, 0x0a, 0x04, 0x6d, 0x6f, 0x64, 0x65, 0x18, 0x02, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x04, 0x6d, 0x6f, 0x64, 0x65, 0x12, 0x1c, 0x0a, 0x09, 0x6d, 0x6f, 0x64,
+	0x65, 0x6c, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x6d, 0x6f,
+	0x64, 0x65, 0x6c, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x1a, 0x0a, 0x08, 0x61, 0x76, 0x67, 0x70, 0x72,
+	0x69, 0x63, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x61, 0x76, 0x67, 0x70, 0x72,
+	0x69, 0x63, 0x65, 0x12, 0x20, 0x0a, 0x0b, 0x6f, 0x72, 0x64, 0x65, 0x72, 0x69, 0x64, 0x6c, 0x69,
+	0x73, 0x74, 0x18, 0x05, 0x20, 0x03, 0x28, 0x09, 0x52, 0x0b, 0x6f, 0x72, 0x64, 0x65, 0x72, 0x69,
+	0x64, 0x6c, 0x69, 0x73, 0x74, 0x22, 0x79, 0x0a, 0x11, 0x4d, 0x61, 0x72, 0x6b, 0x65, 0x74, 0x49,
+	0x6e, 0x66, 0x6f, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x20, 0x0a, 0x03, 0x6d, 0x73,
+	0x67, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0e, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e,
+	0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x52, 0x03, 0x6d, 0x73, 0x67, 0x12, 0x12, 0x0a, 0x04,
+	0x6d, 0x6f, 0x64, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6d, 0x6f, 0x64, 0x65,
+	0x12, 0x1a, 0x0a, 0x08, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x18, 0x03, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x08, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x12, 0x12, 0x0a, 0x04,
+	0x74, 0x79, 0x70, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x74, 0x79, 0x70, 0x65,
+	0x22, 0x4b, 0x0a, 0x11, 0x4d, 0x61, 0x72, 0x6b, 0x65, 0x74, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x64, 0x12, 0x1c, 0x0a, 0x09, 0x74, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61,
+	0x6d, 0x70, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x74, 0x69, 0x6d, 0x65, 0x73, 0x74,
+	0x61, 0x6d, 0x70, 0x12, 0x18, 0x0a, 0x07, 0x73, 0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x73, 0x18, 0x02,
+	0x20, 0x03, 0x28, 0x09, 0x52, 0x07, 0x73, 0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x73, 0x22, 0xf2, 0x02,
+	0x0a, 0x12, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x4f, 0x72, 0x64, 0x65, 0x72, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x12, 0x20, 0x0a, 0x03, 0x6d, 0x73, 0x67, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x0b, 0x32, 0x0e, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67,
+	0x65, 0x52, 0x03, 0x6d, 0x73, 0x67, 0x12, 0x12, 0x0a, 0x04, 0x6d, 0x6f, 0x64, 0x65, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6d, 0x6f, 0x64, 0x65, 0x12, 0x20, 0x0a, 0x0b, 0x64, 0x72,
+	0x6f, 0x70, 0x70, 0x65, 0x72, 0x63, 0x65, 0x6e, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x0b, 0x64, 0x72, 0x6f, 0x70, 0x70, 0x65, 0x72, 0x63, 0x65, 0x6e, 0x74, 0x12, 0x20, 0x0a, 0x0b,
+	0x67, 0x6f, 0x75, 0x70, 0x70, 0x65, 0x72, 0x63, 0x65, 0x6e, 0x74, 0x18, 0x04, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x0b, 0x67, 0x6f, 0x75, 0x70, 0x70, 0x65, 0x72, 0x63, 0x65, 0x6e, 0x74, 0x12, 0x1a,
+	0x0a, 0x08, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x08, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x74, 0x79,
+	0x70, 0x65, 0x18, 0x06, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x74, 0x79, 0x70, 0x65, 0x12, 0x16,
+	0x0a, 0x06, 0x73, 0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x18, 0x07, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06,
+	0x73, 0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x12, 0x1c, 0x0a, 0x09, 0x63, 0x79, 0x63, 0x6c, 0x65, 0x74,
+	0x79, 0x70, 0x65, 0x18, 0x08, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x63, 0x79, 0x63, 0x6c, 0x65,
+	0x74, 0x79, 0x70, 0x65, 0x12, 0x1a, 0x0a, 0x08, 0x6c, 0x65, 0x76, 0x65, 0x72, 0x61, 0x67, 0x65,
+	0x18, 0x09, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x6c, 0x65, 0x76, 0x65, 0x72, 0x61, 0x67, 0x65,
+	0x12, 0x20, 0x0a, 0x0b, 0x6d, 0x61, 0x78, 0x64, 0x72, 0x61, 0x77, 0x64, 0x6f, 0x77, 0x6e, 0x18,
+	0x0a, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x6d, 0x61, 0x78, 0x64, 0x72, 0x61, 0x77, 0x64, 0x6f,
+	0x77, 0x6e, 0x12, 0x22, 0x0a, 0x0c, 0x77, 0x69, 0x74, 0x68, 0x64, 0x72, 0x61, 0x77, 0x73, 0x70,
+	0x6f, 0x74, 0x18, 0x0b, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x77, 0x69, 0x74, 0x68, 0x64, 0x72,
+	0x61, 0x77, 0x73, 0x70, 0x6f, 0x74, 0x12, 0x1a, 0x0a, 0x08, 0x71, 0x75, 0x61, 0x6e, 0x74, 0x69,
+	0x74, 0x79, 0x18, 0x0c, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x71, 0x75, 0x61, 0x6e, 0x74, 0x69,
+	0x74, 0x79, 0x22, 0x6a, 0x0a, 0x12, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x4f, 0x72, 0x64, 0x65,
+	0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x64, 0x12, 0x1c, 0x0a, 0x09, 0x74, 0x69, 0x6d, 0x65,
+	0x73, 0x74, 0x61, 0x6d, 0x70, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x74, 0x69, 0x6d,
+	0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x12, 0x18, 0x0a, 0x07, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e,
+	0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74,
+	0x12, 0x1c, 0x0a, 0x09, 0x62, 0x6f, 0x74, 0x61, 0x63, 0x74, 0x69, 0x76, 0x65, 0x18, 0x03, 0x20,
+	0x01, 0x28, 0x08, 0x52, 0x09, 0x62, 0x6f, 0x74, 0x61, 0x63, 0x74, 0x69, 0x76, 0x65, 0x22, 0x81,
+	0x01, 0x0a, 0x15, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x42, 0x61, 0x6c, 0x61, 0x6e, 0x63,
+	0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x20, 0x0a, 0x03, 0x6d, 0x73, 0x67, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0e, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x4d, 0x65,
+	0x73, 0x73, 0x61, 0x67, 0x65, 0x52, 0x03, 0x6d, 0x73, 0x67, 0x12, 0x12, 0x0a, 0x04, 0x6d, 0x6f,
+	0x64, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6d, 0x6f, 0x64, 0x65, 0x12, 0x1a,
+	0x0a, 0x08, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x08, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x12, 0x16, 0x0a, 0x06, 0x73, 0x79,
+	0x6d, 0x62, 0x6f, 0x6c, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x73, 0x79, 0x6d, 0x62,
+	0x6f, 0x6c, 0x22, 0x4f, 0x0a, 0x15, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x42, 0x61, 0x6c,
+	0x61, 0x6e, 0x63, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x64, 0x12, 0x1c, 0x0a, 0x09, 0x74,
+	0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09,
+	0x74, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x12, 0x18, 0x0a, 0x07, 0x62, 0x61, 0x6c,
+	0x61, 0x6e, 0x63, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x62, 0x61, 0x6c, 0x61,
+	0x6e, 0x63, 0x65, 0x22, 0x07, 0x0a, 0x05, 0x43, 0x6c, 0x6f, 0x73, 0x65, 0x32, 0x9b, 0x02, 0x0a,
+	0x0a, 0x54, 0x72, 0x61, 0x64, 0x69, 0x6e, 0x67, 0x42, 0x6f, 0x74, 0x12, 0x32, 0x0a, 0x0c, 0x43,
+	0x72, 0x65, 0x61, 0x74, 0x65, 0x53, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x12, 0x0e, 0x2e, 0x70, 0x72,
+	0x6f, 0x74, 0x6f, 0x2e, 0x43, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x1a, 0x0e, 0x2e, 0x70, 0x72,
+	0x6f, 0x74, 0x6f, 0x2e, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x22, 0x00, 0x30, 0x01, 0x12,
+	0x42, 0x0a, 0x0a, 0x4d, 0x61, 0x72, 0x6b, 0x65, 0x74, 0x49, 0x6e, 0x66, 0x6f, 0x12, 0x18, 0x2e,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x4d, 0x61, 0x72, 0x6b, 0x65, 0x74, 0x49, 0x6e, 0x66, 0x6f,
+	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x18, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e,
+	0x4d, 0x61, 0x72, 0x6b, 0x65, 0x74, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x64, 0x22, 0x00, 0x12, 0x45, 0x0a, 0x0b, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x4f, 0x72, 0x64,
+	0x65, 0x72, 0x12, 0x19, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74,
+	0x65, 0x4f, 0x72, 0x64, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x19, 0x2e,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x4f, 0x72, 0x64, 0x65,
+	0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x64, 0x22, 0x00, 0x12, 0x4e, 0x0a, 0x0e, 0x41, 0x63,
+	0x63, 0x6f, 0x75, 0x6e, 0x74, 0x42, 0x61, 0x6c, 0x61, 0x6e, 0x63, 0x65, 0x12, 0x1c, 0x2e, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x42, 0x61, 0x6c, 0x61,
+	0x6e, 0x63, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1c, 0x2e, 0x70, 0x72, 0x6f,
+	0x74, 0x6f, 0x2e, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x42, 0x61, 0x6c, 0x61, 0x6e, 0x63,
+	0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x64, 0x22, 0x00, 0x42, 0x0a, 0x5a, 0x08, 0x2e, 0x2f,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -276,25 +1129,46 @@ func file_proto_service_proto_rawDescGZIP() []byte {
 	return file_proto_service_proto_rawDescData
 }
 
-var file_proto_service_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_proto_service_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
 var file_proto_service_proto_goTypes = []interface{}{
-	(*User)(nil),    // 0: proto.User
-	(*Connect)(nil), // 1: proto.Connect
-	(*Message)(nil), // 2: proto.Message
-	(*Close)(nil),   // 3: proto.Close
+	(*DepositAddresses)(nil),      // 0: proto.DepositAddresses
+	(*Exchange)(nil),              // 1: proto.Exchange
+	(*ExchangeConfig)(nil),        // 2: proto.ExchangeConfig
+	(*User)(nil),                  // 3: proto.User
+	(*Connect)(nil),               // 4: proto.Connect
+	(*Message)(nil),               // 5: proto.Message
+	(*BotInfo)(nil),               // 6: proto.BotInfo
+	(*MarketInfoRequest)(nil),     // 7: proto.MarketInfoRequest
+	(*MarketInfoRespond)(nil),     // 8: proto.MarketInfoRespond
+	(*CreateOrderRequest)(nil),    // 9: proto.CreateOrderRequest
+	(*CreateOrderRespond)(nil),    // 10: proto.CreateOrderRespond
+	(*AccountBalanceRequest)(nil), // 11: proto.AccountBalanceRequest
+	(*AccountBalanceRespond)(nil), // 12: proto.AccountBalanceRespond
+	(*Close)(nil),                 // 13: proto.Close
 }
 var file_proto_service_proto_depIdxs = []int32{
-	0, // 0: proto.Connect.user:type_name -> proto.User
-	0, // 1: proto.Message.user:type_name -> proto.User
-	1, // 2: proto.TradingBot.CreateStream:input_type -> proto.Connect
-	2, // 3: proto.TradingBot.MarketInfo:input_type -> proto.Message
-	2, // 4: proto.TradingBot.CreateStream:output_type -> proto.Message
-	3, // 5: proto.TradingBot.MarketInfo:output_type -> proto.Close
-	4, // [4:6] is the sub-list for method output_type
-	2, // [2:4] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	0,  // 0: proto.Exchange.depoaddr:type_name -> proto.DepositAddresses
+	1,  // 1: proto.ExchangeConfig.exchs:type_name -> proto.Exchange
+	2,  // 2: proto.User.exchcfg:type_name -> proto.ExchangeConfig
+	3,  // 3: proto.Connect.user:type_name -> proto.User
+	3,  // 4: proto.Message.user:type_name -> proto.User
+	6,  // 5: proto.Message.botinfo:type_name -> proto.BotInfo
+	5,  // 6: proto.MarketInfoRequest.msg:type_name -> proto.Message
+	5,  // 7: proto.CreateOrderRequest.msg:type_name -> proto.Message
+	5,  // 8: proto.AccountBalanceRequest.msg:type_name -> proto.Message
+	4,  // 9: proto.TradingBot.CreateStream:input_type -> proto.Connect
+	7,  // 10: proto.TradingBot.MarketInfo:input_type -> proto.MarketInfoRequest
+	9,  // 11: proto.TradingBot.CreateOrder:input_type -> proto.CreateOrderRequest
+	11, // 12: proto.TradingBot.AccountBalance:input_type -> proto.AccountBalanceRequest
+	5,  // 13: proto.TradingBot.CreateStream:output_type -> proto.Message
+	8,  // 14: proto.TradingBot.MarketInfo:output_type -> proto.MarketInfoRespond
+	10, // 15: proto.TradingBot.CreateOrder:output_type -> proto.CreateOrderRespond
+	12, // 16: proto.TradingBot.AccountBalance:output_type -> proto.AccountBalanceRespond
+	13, // [13:17] is the sub-list for method output_type
+	9,  // [9:13] is the sub-list for method input_type
+	9,  // [9:9] is the sub-list for extension type_name
+	9,  // [9:9] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_proto_service_proto_init() }
@@ -304,7 +1178,7 @@ func file_proto_service_proto_init() {
 	}
 	if !protoimpl.UnsafeEnabled {
 		file_proto_service_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*User); i {
+			switch v := v.(*DepositAddresses); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -316,7 +1190,7 @@ func file_proto_service_proto_init() {
 			}
 		}
 		file_proto_service_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Connect); i {
+			switch v := v.(*Exchange); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -328,7 +1202,7 @@ func file_proto_service_proto_init() {
 			}
 		}
 		file_proto_service_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Message); i {
+			switch v := v.(*ExchangeConfig); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -340,6 +1214,126 @@ func file_proto_service_proto_init() {
 			}
 		}
 		file_proto_service_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*User); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_service_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Connect); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_service_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Message); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_service_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*BotInfo); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_service_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*MarketInfoRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_service_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*MarketInfoRespond); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_service_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*CreateOrderRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_service_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*CreateOrderRespond); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_service_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*AccountBalanceRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_service_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*AccountBalanceRespond); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_service_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Close); i {
 			case 0:
 				return &v.state
@@ -358,7 +1352,7 @@ func file_proto_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_proto_service_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   14,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
@@ -385,7 +1379,9 @@ const _ = grpc.SupportPackageIsVersion6
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type TradingBotClient interface {
 	CreateStream(ctx context.Context, in *Connect, opts ...grpc.CallOption) (TradingBot_CreateStreamClient, error)
-	MarketInfo(ctx context.Context, in *Message, opts ...grpc.CallOption) (*Close, error)
+	MarketInfo(ctx context.Context, in *MarketInfoRequest, opts ...grpc.CallOption) (*MarketInfoRespond, error)
+	CreateOrder(ctx context.Context, in *CreateOrderRequest, opts ...grpc.CallOption) (*CreateOrderRespond, error)
+	AccountBalance(ctx context.Context, in *AccountBalanceRequest, opts ...grpc.CallOption) (*AccountBalanceRespond, error)
 }
 
 type tradingBotClient struct {
@@ -428,9 +1424,27 @@ func (x *tradingBotCreateStreamClient) Recv() (*Message, error) {
 	return m, nil
 }
 
-func (c *tradingBotClient) MarketInfo(ctx context.Context, in *Message, opts ...grpc.CallOption) (*Close, error) {
-	out := new(Close)
+func (c *tradingBotClient) MarketInfo(ctx context.Context, in *MarketInfoRequest, opts ...grpc.CallOption) (*MarketInfoRespond, error) {
+	out := new(MarketInfoRespond)
 	err := c.cc.Invoke(ctx, "/proto.TradingBot/MarketInfo", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *tradingBotClient) CreateOrder(ctx context.Context, in *CreateOrderRequest, opts ...grpc.CallOption) (*CreateOrderRespond, error) {
+	out := new(CreateOrderRespond)
+	err := c.cc.Invoke(ctx, "/proto.TradingBot/CreateOrder", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *tradingBotClient) AccountBalance(ctx context.Context, in *AccountBalanceRequest, opts ...grpc.CallOption) (*AccountBalanceRespond, error) {
+	out := new(AccountBalanceRespond)
+	err := c.cc.Invoke(ctx, "/proto.TradingBot/AccountBalance", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -440,7 +1454,9 @@ func (c *tradingBotClient) MarketInfo(ctx context.Context, in *Message, opts ...
 // TradingBotServer is the server API for TradingBot service.
 type TradingBotServer interface {
 	CreateStream(*Connect, TradingBot_CreateStreamServer) error
-	MarketInfo(context.Context, *Message) (*Close, error)
+	MarketInfo(context.Context, *MarketInfoRequest) (*MarketInfoRespond, error)
+	CreateOrder(context.Context, *CreateOrderRequest) (*CreateOrderRespond, error)
+	AccountBalance(context.Context, *AccountBalanceRequest) (*AccountBalanceRespond, error)
 }
 
 // UnimplementedTradingBotServer can be embedded to have forward compatible implementations.
@@ -450,8 +1466,14 @@ type UnimplementedTradingBotServer struct {
 func (*UnimplementedTradingBotServer) CreateStream(*Connect, TradingBot_CreateStreamServer) error {
 	return status.Errorf(codes.Unimplemented, "method CreateStream not implemented")
 }
-func (*UnimplementedTradingBotServer) MarketInfo(context.Context, *Message) (*Close, error) {
+func (*UnimplementedTradingBotServer) MarketInfo(context.Context, *MarketInfoRequest) (*MarketInfoRespond, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method MarketInfo not implemented")
+}
+func (*UnimplementedTradingBotServer) CreateOrder(context.Context, *CreateOrderRequest) (*CreateOrderRespond, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateOrder not implemented")
+}
+func (*UnimplementedTradingBotServer) AccountBalance(context.Context, *AccountBalanceRequest) (*AccountBalanceRespond, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AccountBalance not implemented")
 }
 
 func RegisterTradingBotServer(s *grpc.Server, srv TradingBotServer) {
@@ -480,7 +1502,7 @@ func (x *tradingBotCreateStreamServer) Send(m *Message) error {
 }
 
 func _TradingBot_MarketInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Message)
+	in := new(MarketInfoRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -492,7 +1514,43 @@ func _TradingBot_MarketInfo_Handler(srv interface{}, ctx context.Context, dec fu
 		FullMethod: "/proto.TradingBot/MarketInfo",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TradingBotServer).MarketInfo(ctx, req.(*Message))
+		return srv.(TradingBotServer).MarketInfo(ctx, req.(*MarketInfoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TradingBot_CreateOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateOrderRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TradingBotServer).CreateOrder(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.TradingBot/CreateOrder",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TradingBotServer).CreateOrder(ctx, req.(*CreateOrderRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TradingBot_AccountBalance_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AccountBalanceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TradingBotServer).AccountBalance(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.TradingBot/AccountBalance",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TradingBotServer).AccountBalance(ctx, req.(*AccountBalanceRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -504,6 +1562,14 @@ var _TradingBot_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "MarketInfo",
 			Handler:    _TradingBot_MarketInfo_Handler,
+		},
+		{
+			MethodName: "CreateOrder",
+			Handler:    _TradingBot_CreateOrder_Handler,
+		},
+		{
+			MethodName: "AccountBalance",
+			Handler:    _TradingBot_AccountBalance_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
