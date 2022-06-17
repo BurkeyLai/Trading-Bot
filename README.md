@@ -1,3 +1,5 @@
+# Framework
+![framework](https://github.com/BurkeyLai/Trading-Bot/framework.png)
 
 # Quick Start
 ## Build Docker Images
