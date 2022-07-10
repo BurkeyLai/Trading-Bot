@@ -17,7 +17,7 @@ import Container from '@mui/material/Container';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import Toast from '../utils/toastify';
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
-
+import { IsSignOut } from "../components/layout/MainNavbar/NavbarNav/UserActions";
 
 function Copyright(props) {
   return (
@@ -35,6 +35,7 @@ function Copyright(props) {
 const theme = createTheme();
 
 export default function SignIn() {
+    const { isSignOut, setIsSignOut } = React.useContext(IsSignOut);
     const navigate = useNavigate();
     const handleSubmit = (event) => {
         event.preventDefault();
@@ -48,8 +49,9 @@ export default function SignIn() {
             const emailVerified = user.emailVerified;
             // ...
             if (emailVerified) {
-                navigate('/tradings');
-                Toast('success', true, 'Welcome! ' + user.displayName);
+              navigate('/user-profile-lite');
+              Toast('success', true, 'Welcome! ' + user.displayName);
+              setIsSignOut(false);
             } else {
               Toast('warn', true, 'You need to click the link in the confirmation email!');
             }
@@ -66,10 +68,11 @@ export default function SignIn() {
         //    password: data.get('password'),
         //});
     };
-
+    console.log(isSignOut);
   return (
     <ThemeProvider theme={theme}>
       <Container component="main" maxWidth="xs">
+      <ToastContainer />
         <CssBaseline />
         <Box
           sx={{
@@ -118,7 +121,6 @@ export default function SignIn() {
             >
               Sign In
             </Button>
-            <ToastContainer />
             <Grid container>
               <Grid item xs>
                 <Link href="#" variant="body2">

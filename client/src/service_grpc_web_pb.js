@@ -309,5 +309,127 @@ proto.proto.TradingBotPromiseClient.prototype.accountBalance =
 };
 
 
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.proto.OrderInfoRequest,
+ *   !proto.proto.OrderInfoRespond>}
+ */
+const methodDescriptor_TradingBot_OrderInfo = new grpc.web.MethodDescriptor(
+  '/proto.TradingBot/OrderInfo',
+  grpc.web.MethodType.UNARY,
+  proto.proto.OrderInfoRequest,
+  proto.proto.OrderInfoRespond,
+  /**
+   * @param {!proto.proto.OrderInfoRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.proto.OrderInfoRespond.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.proto.OrderInfoRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.proto.OrderInfoRespond)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.proto.OrderInfoRespond>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.proto.TradingBotClient.prototype.orderInfo =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/proto.TradingBot/OrderInfo',
+      request,
+      metadata || {},
+      methodDescriptor_TradingBot_OrderInfo,
+      callback);
+};
+
+
+/**
+ * @param {!proto.proto.OrderInfoRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.proto.OrderInfoRespond>}
+ *     Promise that resolves to the response
+ */
+proto.proto.TradingBotPromiseClient.prototype.orderInfo =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/proto.TradingBot/OrderInfo',
+      request,
+      metadata || {},
+      methodDescriptor_TradingBot_OrderInfo);
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.proto.ClosePositionRequest,
+ *   !proto.proto.ClosePositionRespond>}
+ */
+const methodDescriptor_TradingBot_ClosePosition = new grpc.web.MethodDescriptor(
+  '/proto.TradingBot/ClosePosition',
+  grpc.web.MethodType.UNARY,
+  proto.proto.ClosePositionRequest,
+  proto.proto.ClosePositionRespond,
+  /**
+   * @param {!proto.proto.ClosePositionRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.proto.ClosePositionRespond.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.proto.ClosePositionRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.proto.ClosePositionRespond)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.proto.ClosePositionRespond>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.proto.TradingBotClient.prototype.closePosition =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/proto.TradingBot/ClosePosition',
+      request,
+      metadata || {},
+      methodDescriptor_TradingBot_ClosePosition,
+      callback);
+};
+
+
+/**
+ * @param {!proto.proto.ClosePositionRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.proto.ClosePositionRespond>}
+ *     Promise that resolves to the response
+ */
+proto.proto.TradingBotPromiseClient.prototype.closePosition =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/proto.TradingBot/ClosePosition',
+      request,
+      metadata || {},
+      methodDescriptor_TradingBot_ClosePosition);
+};
+
+
 module.exports = proto.proto;
 

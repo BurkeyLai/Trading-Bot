@@ -39,6 +39,7 @@ type Market struct {
 	LotSizeMinQty  string            `json:"lotSizeMinQty,omitempty"`
 	LotSizeMaxQty  string            `json:"lotSizeMaxQty,omitempty"`
 	MinNotional    string            `json:"minNotional,omitempty"`
+	Balance        string            `json:"balance,omitempty"`
 	ExchangeNames  map[string]string `json:"-"` // Represents the various names of the market on various exchanges.
 	Summary        MarketSummary
 	Orders         []*binance.Order

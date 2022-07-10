@@ -32,6 +32,11 @@ export default function() {
     //  to: "/tables",
     //},
     {
+      title: "收益資訊",
+      htmlBefore: '<i class="material-icons">paid</i>',
+      to: "/profitinfo",
+    },
+    {
       title: "使用者檔案",
       htmlBefore: '<i class="material-icons">person</i>',
       to: "/user-profile-lite",

@@ -451,3 +451,18 @@ func (wrapper *BinanceWrapper) AskOrderList(mode string, market *environment.Mar
 	}
 
 }
+
+func (wrapper *BinanceWrapper) QueryOrder(mode, id, symbol string) (*binance.Order, error) {
+	if mode == SPOT {
+		order, err := wrapper.api.NewGetOrderService().Symbol(symbol).
+			OrigClientOrderID(id).Do(context.Background())
+		if err != nil {
+			fmt.Println(err)
+			return nil, err
+		}
+		fmt.Println(order)
+		return order, nil
+	} else {
+		return nil, nil
+	}
+}

@@ -9,8 +9,7 @@ import Errors from "./views/Errors";
 import ComponentsOverview from "./views/ComponentsOverview";
 import Tables from "./views/Tables";
 import Tradings from "./views/Tradings";
-//import Home from "./Home";
-//import routes from "./routes";
+import ProfitInfo from "./views/ProfitInfo";
 import withTracker from "./withTracker";
 import { DefaultLayout } from "./layouts";
 
@@ -21,7 +20,8 @@ import "./shards-dashboard/styles/scss/shards-dashboards.scss"
 
 import { TradingBotClient } from "./service_grpc_web_pb";
 
-var client = new TradingBotClient("https://envoy-mnthzlygaa-de.a.run.app:443" || "http://localhost:8080", null, null);
+//var client = new TradingBotClient("https://envoy-mnthzlygaa-de.a.run.app:443" || "http://localhost:8080", null, null);
+var client = new TradingBotClient("http://localhost:8080", null, null);
 
 //var fs = require('fs');
 //var grpc = require('@grpc/grpc-js');
@@ -58,6 +58,11 @@ const App = () => {
       <Route path="/tradings" element={
         <DefaultLayout>
           <Tradings client={client}/>
+        </DefaultLayout>
+      }/>
+      <Route path="/profitinfo" element={
+        <DefaultLayout>
+          <ProfitInfo client={client}/>
         </DefaultLayout>
       }/>
       <Route path="/tables" element={

@@ -50,7 +50,8 @@ message BotInfo {
     string mode = 2;
     string modelname = 3;
     string avgprice = 4;
-    repeated string orderidlist = 5;
+    string symbolbalance = 5;
+    repeated string orderidlist = 6;
 }
 
 message MarketInfoRequest {
@@ -98,6 +99,36 @@ message AccountBalanceRespond {
     string balance = 2;
 }
 
+message OrderInfoRequest {
+    Message msg = 1;
+    string mode = 2;
+    string exchange = 3;
+    string symbol = 4;
+    string orderid = 5;
+}
+
+message OrderInfoRespond {
+    string timestamp = 1;
+    string quantity = 2;
+    string amount = 3;
+    string price = 4;
+    string type = 5;
+    string side = 6;
+}
+
+message ClosePositionRequest {
+    Message msg = 1;
+    string mode = 2;
+    string exchange = 3;
+    string symbol = 4;
+}
+
+message ClosePositionRespond {
+    string timestamp = 1;
+    string content = 2;
+    bool botactive = 3;
+}
+
 message Close {}
 
 service TradingBot {
@@ -105,6 +136,8 @@ service TradingBot {
     rpc MarketInfo(MarketInfoRequest) returns (MarketInfoRespond) {}
     rpc CreateOrder(CreateOrderRequest) returns (CreateOrderRespond) {}
     rpc AccountBalance(AccountBalanceRequest) returns (AccountBalanceRespond) {}
+    rpc OrderInfo(OrderInfoRequest) returns (OrderInfoRespond) {}
+    rpc ClosePosition(ClosePositionRequest) returns (ClosePositionRespond) {}
 }
 
 // make build && cp proto/service.pb.go server/proto/

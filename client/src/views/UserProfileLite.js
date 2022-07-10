@@ -93,20 +93,26 @@ const UserProfileLite = () => {
   }
 
   useEffect(() => {
-    const auth = getAuth();
-    onAuthStateChanged(auth, async (f_user) => {
-      if (f_user) {
-        userRef = doc(firestoreDB, 'User', f_user.uid);
-        userSnap = await getDoc(userRef);
-        if (userSnap.exists) {
-          userDetails.name = userSnap.get('name');
-          userDetails.jobTitle = userSnap.get('email');
-          setUpdateUserDatil(true);
+    let isMounted = true;
+    if(isMounted){
+      const auth = getAuth();
+      onAuthStateChanged(auth, async (f_user) => {
+        if (f_user) {
+          userRef = doc(firestoreDB, 'User', f_user.uid);
+          userSnap = await getDoc(userRef);
+          if (userSnap.exists) {
+            userDetails.name = userSnap.get('name');
+            userDetails.jobTitle = userSnap.get('email');
+            setUpdateUserDatil(true);
+          }
+        } else {
+          // User is signed out
         }
-      } else {
-        // User is signed out
-      }
-    });
+      });
+    }
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   return (

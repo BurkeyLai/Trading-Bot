@@ -56,6 +56,7 @@ type ExchangeWrapper interface {
 
 	Withdraw(destinationAddress string, coinTicker string, amount float64) error // Performs a withdraw operation from the exchange to a destination address.
 	AskOrderList(mode string, market *environment.Market) ([]*binance.Order, error)
+	QueryOrder(mode, id, symbol string) (*binance.Order, error)
 	String() string // Returns a string representation of the object.
 }
 

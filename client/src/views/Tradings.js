@@ -21,8 +21,10 @@ import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { firestoreDB } from '..';
 import { doc, setDoc, getDoc, getDocs, query, orderBy, limit, where, collection, onSnapshot, collectionGroup } from "firebase/firestore"; 
 import PageTitle from "../components/common/PageTitle";
-import {ToastContainer} from 'react-toastify';
+import TopReferrals from "../components/common/TopReferrals";
+import {toast, ToastContainer} from 'react-toastify';
 import Toast from "../utils/toastify";
+import { RowComponent } from "../utils/rowComponent";
 import { User, 
   Connect, 
   Message, 
@@ -31,8 +33,10 @@ import { User,
   DepositAddresses, 
   MarketInfoRequest,
   AccountBalanceRequest,
-  CreateOrderRequest, } from "../service_pb";
-
+  ClosePositionRequest,
+  CreateOrderRequest,
+  OrderInfoRequest, } from "../service_pb";
+import { IsSignOut } from "../components/layout/MainNavbar/NavbarNav/UserActions";
 
 const exchNum = 2, exch1 = "火幣", exch2 = "幣安", conNum = 2, type1 = "U本位", type2 = "幣本位";
 const exchNameArray = ['huobi', 'binance'];
@@ -43,12 +47,13 @@ const connect = new Connect();
 const msg = new Message();
 var userRef = null;
 var userSnap = null;
-
+//             "homepage": "/static-tradingbot-client",
 const Tradings = ({ client }) => {
-    
+    const { isSignOut } = React.useContext(IsSignOut);
     //const symbolArray1 = [], symbolArray2 = [];
     //const symbolTest = ['1', '2', '3'];
     const [briefBotInfoArray, setBriefBotInfoArray] = useState([]);
+    const [detailBotInfoArray, setDetailBotInfoArray] = useState([]);
     //const [updateBriefBotInfoArray, setUpdateBriefBotInfoArray] = useState(false);
 
     const [symbolArray1, setSymbolArray1] = useState([]);
@@ -62,8 +67,19 @@ const Tradings = ({ client }) => {
     const [maxAmount, setMaxAmount] = useState(0);
     const [future, setFuture] = useState(false);
     const [newTrading, setNewTrading] = useState(false);
-    const [conservative, setConservative] = useState(true);
+
+    const [selectedStrategy, setSelectedStrategy] = useState(0);
     const [symbolBalance, setSymbolBalance] = useState('');
+    const [dropPercent, setDropPercent] = useState('3');
+    const [goUpPercent, setGoUpPercent] = useState('5');
+    const [expandTableDetails, setExpandTableDetails] = useState(0);
+    const [lastTableIndex, setLastTableIndex] = useState(0);
+    const [orderIdArray, setOrderIdArray] = useState([]);
+    const [orderIdName, setOrderIdName] = useState('');
+    const [referralData, setReferralData] = useState([]);
+    const [cycleType, setCycleType] = useState('');
+    const [isClosePosition, setIsClosePosition] = useState(false);
+    const [confirmClosePosition, setConfirmClosePosition] = useState('');
     
     const askMarketSymbols = () => {
       
@@ -103,6 +119,58 @@ const Tradings = ({ client }) => {
         });
       }
     }
+
+    const askClosePosition = () => {
+      if (user.getId() !== '') {
+        const req = new ClosePositionRequest();
+        const mode = detailBotInfoArray[0].dtlMode;
+        const exch = detailBotInfoArray[0].dtlExchange;
+        const symbol = detailBotInfoArray[0].dtlSymbol;
+        msg.setContent("Ask for close position...");
+        msg.setTimestamp(new Date().toLocaleTimeString());
+        req.setMsg(msg);
+        if (detailBotInfoArray[0] != null) {
+          req.setMode(mode);
+          (exch === 'huboi') ? req.setExchange('Huobi') : req.setExchange('Binance');
+          req.setSymbol(symbol);
+        }
+        client.closePosition(req, null, (err, resp) => {
+          if (resp) {
+            console.log(resp.getContent())
+            if (resp.getContent() != '') {
+              shutDownBot(symbol);
+              Toast('success', true, "平倉成功");
+            }
+          }
+        });
+      }
+    }
+
+    const shutDownBot = (symbol) => {
+      if (userRef != null) { 
+        const storeBots = async () => {
+          userSnap = await getDoc(userRef);
+          if (userSnap.exists) {
+            if (userSnap.get("bots_array")) {
+              var arr = userSnap.get("bots_array");
+              for (var i = 0; i < arr.length; ++i) {
+                if(arr[i].symbol == symbol) {
+                  arr.splice(i, 1);
+                }
+              }
+              setDoc(userRef, {
+                'bots_array': arr
+              }, { merge: true });
+            }
+          }
+          return '平倉成功'
+        }
+
+        storeBots().then((res) => {
+          console.log(res);
+        });
+      }
+    }
     
     const launchCreateOrder = () => {
       if (user.getId() !== '') {
@@ -111,12 +179,12 @@ const Tradings = ({ client }) => {
         msg.setTimestamp(new Date().toLocaleTimeString());
         req.setMsg(msg);
         (future) ? req.setMode('future') : req.setMode('spot');
-        (conservative) ? req.setDroppercent('0.03') : req.setDroppercent('0.01');
-        (conservative) ? req.setGouppercent('0.05') : req.setGouppercent('0.01');
+        req.setDroppercent((parseFloat(dropPercent, 10) / 100).toString());
+        req.setGouppercent((parseFloat(goUpPercent, 10) / 100).toString());
         (selectedExch === '火幣') ? req.setExchange('Huobi') : req.setExchange('Binance');
         (selectedType === 'U本位') ? req.setType('usdt') : req.setType('coin');
         req.setSymbol(selectedSymbol);
-        req.setCycletype('');
+        (cycleType === '單次循環') ? req.setCycletype('single') : req.setCycletype('recursive');
         req.setLeverage(selectedLeverage);
         req.setMaxdrawdown(maxDrawdown);
         req.setWithdrawspot('');
@@ -136,8 +204,9 @@ const Tradings = ({ client }) => {
                     drop_percent : req.getDroppercent(),
                     go_up_percent : req.getGouppercent(),
                     exchange : req.getExchange().toLowerCase(),
-                    type : req.getType(),
+                    m_type : req.getType(),
                     symbol : strs[0] + strs[1],
+                    symbol_balance : '',
                     cycle_type : req.getCycletype(),
                     leverage : req.getLeverage(),
                     max_drawdown : req.getMaxdrawdown(),
@@ -211,10 +280,19 @@ const Tradings = ({ client }) => {
       }
     };
     const strategy1 = () => {
-      setConservative(true)
+      setSelectedStrategy(0);
+      setDropPercent('3');
+      setGoUpPercent('5');
     };
     const strategy2 = () => {
-      setConservative(false)
+      setSelectedStrategy(1);
+      setDropPercent('1');
+      setGoUpPercent('1');
+    };
+    const strategy3 = () => {
+      setSelectedStrategy(2);
+      setDropPercent('');
+      setGoUpPercent('');
     };
 
     const confirmNewTrading = () => {
@@ -226,6 +304,10 @@ const Tradings = ({ client }) => {
         Toast('error', true, '請輸入最大回撤');
       } else if (maxAmount === '') {
         Toast('error', true, '請輸入首單金額');
+      } else if (dropPercent === '') {
+        Toast('error', true, '請輸入偵測％');
+      } else if (goUpPercent === '') {
+        Toast('error', true, '請輸入回彈％');
       } else {
         setNewTrading(false)
         launchCreateOrder();
@@ -253,37 +335,6 @@ const Tradings = ({ client }) => {
       const auth = getAuth();
       onAuthStateChanged(auth, async (f_user) => {
         if (f_user) {
-          /*
-          userRef = doc(firestoreDB, 'User', f_user.uid);
-          userSnap = await getDoc(userRef);
-          if (userSnap.exists) {
-            if (userSnap.get("bots_array")) {
-              var arr = userSnap.get("bots_array");
-              for (var i = 0; i < arr.length; i++) {
-                console.log(arr[i].symbol)
-              }
-              //const obj = {
-              //  exchange: 'binance',
-              //  symbol: 'BTCUSDT',
-              //  mode: 'spot'
-              //}
-              //arr = [...arr, obj]
-              //setDoc(userRef, {
-              //  'bots_array': arr
-              //}, { merge: true });
-            } else {
-              const obj = {
-                exchange: 'binance',
-                symbol: 'ETHUSDT',
-                mode: 'spot'
-              }
-              setDoc(userRef, {
-                'bots_array': [obj]
-              }, { merge: true });
-            }
-          }
-          */
-
           userSnap = await getDoc(userRef);
           if (userSnap.exists) {
             if (userSnap.get("bots_array")) {
@@ -296,8 +347,9 @@ const Tradings = ({ client }) => {
                   brfExch: (arr[i].exchange == 'huobi') ? exch1 : exch2,
                   brfSymbol: arr[i].symbol,
                   brfAvgPrice: arr[i].average_price,
+                  brfBalance: arr[i].symbol_balance,
                   brfMode: (arr[i].mode == 'spot') ? '現貨' : '合約',
-                  brfQty: arr[i].quantity
+                  //brfQty: arr[i].quantity
                 };
                 updateArray = [...updateArray, tbl];
               }
@@ -332,6 +384,7 @@ const Tradings = ({ client }) => {
                 if (found) {
                   arr[i].average_price = info.getAvgprice();
                   arr[i].order_id_list = info.getOrderidlistList();
+                  arr[i].symbol_balance = info.getSymbolbalance();
                   setDoc(userRef, {
                     'bots_array': arr
                   }, { merge: true });
@@ -358,8 +411,6 @@ const Tradings = ({ client }) => {
           }
         }, { merge: true });
         */
-        //setUpdateBriefBotInfoArray(true);
-        //setUpdateBriefBotInfoArray(false);
         updateBriefBotInfo(info);
       }
     }
@@ -423,8 +474,15 @@ const Tradings = ({ client }) => {
             const messageContent = response.getContent();
             const timestamp = response.getTimestamp();
             console.log(id + "[" + username + "]: " + messageContent);
-            if (response.getBotinfo()) {
+            //if (response.getBotinfo()) {
+            //  updateBotInfo(response.getBotinfo());
+            //}
+            if (messageContent == 'First Bot Info!' || messageContent == 'Update Bot Info!') {
               updateBotInfo(response.getBotinfo());
+              Toast('success', true, "下單成功");
+            } else if (messageContent == 'Shut Down Bot!') {
+              shutDownBot(response.getBotinfo().getModelname());
+              Toast('error', true, "下單失敗，請重新下單");
             }
           });
         } else {
@@ -432,72 +490,210 @@ const Tradings = ({ client }) => {
         }
       });
     }
-    
-    //useEffect(() => {
-    //  if (updateBriefBotInfoArray) {
-    //    const auth = getAuth();
-    //    onAuthStateChanged(auth, async (f_user) => {
-    //      if (f_user) {
-    //        userRef = doc(firestoreDB, 'User', f_user.uid);
-    //        userSnap = await getDoc(userRef);
-    //        if (userSnap.exists) {
-    //          //spot_pub_k = (userSnap.get('huobi_apikey')) ? userSnap.get('huobi_apikey') : '';
-    //          //spot_sec_k = (userSnap.get('huobi_secretkey')) ? userSnap.get('huobi_secretkey') : '';
-    //        }
-    //      }
-    //    });
-    //  }
-    //}, [updateBriefBotInfoArray])
 
     useEffect(() => {
-      askCreateStream();
-      updateBriefBotInfo();
-
-      //const auth = getAuth();
-      //onAuthStateChanged(auth, async (f_user) => {
-      //  userRef = doc(firestoreDB, 'User', f_user.uid);
-      //  //const q = query(collection(firestoreDB, "User"), where("binance", "==", "spot"));
-      //  const qq = query(collection(firestoreDB, "User"), where("bot_active", "==", true));
-      //  //console.log(q)
-      //  //console.log(qq)
-      ////  if (f_user) {
-      //  const unsub = onSnapshot(qq, (querySnapshot) => {
-      //    querySnapshot.forEach((doc) => {
-      //      console.log(doc);
-      //    });
-      ////      console.log(doc);
-      ////    console.log("Current data: ", doc.data());
-      //  });
-      ////  }
-      //});
+      let isMounted = true;
+      if(isMounted){
+        askCreateStream();
+        updateBriefBotInfo();
+      }
+      return () => {
+        isMounted = false;
+      };
     }, [])
 
     useEffect(() => {
-      askMarketSymbols();
-      askAccountBalance();
+      let isMounted = true;
+      if(isMounted){
+        askMarketSymbols();
+        askAccountBalance();
+      }
+      return () => {
+        isMounted = false;
+        if (isSignOut) {
+          setSelectedExch(exch1);
+        }
+      };
     }, [selectedExch])
 
     useEffect(() => {
-      //askExchKeyConfig();
-      //setNewTrading(false);
-      askMarketSymbols();
-      askAccountBalance();
-      if (future) {
-        setSelectedLeverage('20');
-      } else {
-        setSelectedLeverage('1');
+      let isMounted = true;
+      if(isMounted){
+        //askExchKeyConfig();
+        //setNewTrading(false);
+        askMarketSymbols();
+        askAccountBalance();
+        if (future) {
+          setSelectedLeverage('20');
+        } else {
+          setSelectedLeverage('1');
+        }
       }
-      
+      return () => {
+        isMounted = false;
+        if (isSignOut) {
+          setFuture(false);
+        }
+      };
     }, [future])
 
-    //useEffect(() => {
-    //  setSelectedSymbol2Ratio(100 - selectedSymbol1Ratio);
-    //}, [selectedSymbol1Ratio])
+    useEffect(() => {
+      let isMounted = true;
+      if (isMounted && user.getId() !== '') {
+        const req = new OrderInfoRequest();
+        msg.setContent("Ask for order information...");
+        msg.setTimestamp(new Date().toLocaleTimeString());
+        req.setMsg(msg);
+        //(future) ? req.setMode('future') : req.setMode('spot');
+        if (detailBotInfoArray[0] != null) {
+          req.setMode(detailBotInfoArray[0].dtlMode);
+          (detailBotInfoArray[0].dtlExchange === 'huboi') ? req.setExchange('Huobi') : req.setExchange('Binance');
+          req.setSymbol(detailBotInfoArray[0].dtlSymbol);
+        }
+        req.setOrderid(orderIdName);
+        client.orderInfo(req, null, (err, resp) => {
+          if (resp) {
+            //console.log(resp.getTimestamp())
+            //var t = new Date( resp.getTimestamp()/1000 );
+            //var formatted = moment(t).format("dd.mm.yyyy hh:MM:ss");
+            //console.log(formatted)
+            const qty = {
+              title: '成交成本',
+              value: resp.getQuantity()
+            }
+            const amount = {
+              title: '成交量',
+              value: resp.getAmount()
+            }
+            const price = {
+              title: '成交價格',
+              value: resp.getPrice()
+            }
+            const type = {
+              title: '成交方式',
+              value: (resp.getType() == 'MARKET') ? '市價' : '限價'
+            }
+            const side = {
+              title: '買/賣',
+              value: (resp.getSide() == 'BUY') ? '買' : '賣'
+            }
+            const time = {
+              title: '成交時間',
+              value: resp.getTimestamp()
+            }
+            setReferralData([qty, amount, price, type, side, time]);
+          }
+        });
+      }
+      return () => {
+        isMounted = false;
+        if (isSignOut) {
+          setOrderIdName('');
+        }
+      };
+    }, [orderIdName])
 
-    //useEffect(() => {
-    //  setSelectedSymbol1Ratio(100 - selectedSymbol2Ratio);
-    //}, [selectedSymbol2Ratio])
+    const fetchDetails = (data) => {
+      setOrderIdName('');
+      if (expandTableDetails != 0 && data.brfIdx == lastTableIndex) {
+        setExpandTableDetails(0);
+      } else {
+        setExpandTableDetails(data.brfIdx + 1);
+      }
+      setLastTableIndex(data.brfIdx);
 
+      const auth = getAuth();
+      onAuthStateChanged(auth, async (f_user) => {
+        if (f_user) {
+          userSnap = await getDoc(userRef);
+          if (userSnap.exists) {
+            if (userSnap.get("bots_array")) {
+              var arr = userSnap.get("bots_array");
+              var updateArray = [];
+              for (var i = 0; i < arr.length; ++i) {
+                if (i == data.brfIdx && arr[i].order_id_list != null) {
+                  const l = arr[i].order_id_list.length;
+                  const tbl = 
+                  {
+                    dtlIdx: i,
+                    dtlActive: (arr[i].bot_active) ? '是' : '否',
+                    dtlOrderNum: (l == 0) ? ('無') : ((l == 1) ? '首倉' : '補 ' + (l - 1).toString()),
+                    dtlLeverage: arr[i].leverage,
+                    dtlCycle: (arr[i].cycle_type == 'single') ? '單次循環' : '循環做單',
+                    dtlMaxDrawdown: arr[i].max_drawdown,
+                    dtlQty: arr[i].quantity,
+                    dtlDrop: (parseFloat(arr[i].drop_percent, 10) * 100).toString(),
+                    dtlGoUp: (parseFloat(arr[i].go_up_percent, 10) * 100).toString(),
+                    dtlExchange: arr[i].exchange,
+                    dtlSymbol: arr[i].symbol,
+                    dtlMode: arr[i].mode
+                  };
+                  updateArray = [...updateArray, tbl];
+
+                  setOrderIdArray(['請選擇', ...arr[i].order_id_list]);
+                  break;
+                }
+              }
+              setDetailBotInfoArray(updateArray);
+            }
+          }
+        }
+      });
+    }
+  
+    const renderResultRows = (data) => {
+      //console.log(data)
+      return (
+        <RowComponent
+          key={data.brfIdx}
+          data={data}
+          onClick={fetchDetails}
+        />
+      )
+    }
+    /*
+    const askOrderInfo = (id) => {
+      if (user.getId() !== '') {
+        const req = new OrderInfoRequest();
+        msg.setContent("Ask for order information...");
+        msg.setTimestamp(new Date().toLocaleTimeString());
+        req.setMsg(msg);
+        (future) ? req.setMode('future') : req.setMode('spot');
+        (detailBotInfoArray[0].dtlExchange === 'huboi') ? req.setExchange('Huobi') : req.setExchange('Binance');
+        req.setSymbol(detailBotInfoArray[0].dtlSymbol);
+        req.setOrderid(id);
+        client.orderInfo(req, null, (err, resp) => {
+          if (resp) {
+            const qty = {
+              title: '成交成本',
+              value: resp.getQuantity()
+            }
+            const amount = {
+              title: '成交量',
+              value: resp.getAmount()
+            }
+            const price = {
+              title: '成交價格',
+              value: resp.getPrice()
+            }
+            const type = {
+              title: '成交方式',
+              value: (resp.getType() == 'MARKET') ? '市價' : '限價'
+            }
+            const side = {
+              title: '買/賣',
+              value: (resp.getSide() == 'BUY') ? '買' : '賣'
+            }
+            setReferralData([qty, amount, price, type, side]);
+          }
+        });
+      }
+
+      setOrderIdName(id);
+    }
+    */
+    
+    
     return (
     <Container fluid className="main-content-container px-4">
     {/* Page Header */}
@@ -509,6 +705,18 @@ const Tradings = ({ client }) => {
     <strong className="text-muted d-block my-2">
         交易方式
     </strong>
+    <Row>
+      <Col>
+        <ButtonGroup className="mb-3 mr3">
+          <Button onClick={() => {
+            askCreateStream();
+            updateBriefBotInfo();
+          }} outline theme="success">
+            重新整理
+          </Button>
+        </ButtonGroup>
+      </Col>
+    </Row>
     <Row>
       <Col>
         <ButtonGroup className="mb-3 mr-3">
@@ -524,6 +732,7 @@ const Tradings = ({ client }) => {
             新增交易對
           </Button>
         </ButtonGroup>
+        
       </Col>
     </Row>
 
@@ -545,17 +754,49 @@ const Tradings = ({ client }) => {
                       </strong>
                       <div>
                         <ButtonGroup className="mb-2">
-                          <Button onClick={strategy1} outline={!conservative} theme="success">
+                          <Button onClick={strategy1} outline={selectedStrategy == 0 ? false : true} theme="success">
                             保守
                           </Button>
-                          <Button onClick={strategy2} outline={conservative} theme="success">
+                          <Button onClick={strategy2} outline={selectedStrategy == 1 ? false : true} theme="success">
                             激進
+                          </Button>
+                          <Button onClick={strategy3} outline={selectedStrategy == 2 ? false : true} theme="success">
+                            自訂
                           </Button>
                         </ButtonGroup>
                       </div>
                     </Col>
                   </Row>
                   
+                  <Row form>
+                    <Col md="6" className="form-group">
+                      <strong className="text-muted d-block mb-2">
+                        偵測％
+                      </strong>
+                      <div>
+                        <InputGroup className="mb-2">
+                          <FormInput readOnly={selectedStrategy == 2 ? false : true} placeholder="0.1 ~ 100" value={dropPercent} onChange={evt => {setDropPercent((parseFloat(evt.target.value, 10) > 100) ? '100' : (parseFloat(evt.target.value, 10) < 0.1 ? '0.1' : evt.target.value))}}/>
+                          <InputGroupAddon type="append">
+                            <InputGroupText>%</InputGroupText>
+                          </InputGroupAddon>
+                        </InputGroup>
+                      </div>
+                    </Col>
+                    <Col md="6" className="form-group">
+                      <strong className="text-muted d-block mb-2">
+                        回彈％
+                      </strong>
+                      <div>
+                        <InputGroup className="mb-2">
+                          <FormInput readOnly={selectedStrategy == 2 ? false : true} placeholder="0.1 ~ 100" value={goUpPercent} onChange={evt => {setGoUpPercent((parseFloat(evt.target.value, 10) > 100) ? '100' : (parseFloat(evt.target.value, 10) < 0.1 ? '0.1' : evt.target.value))}}/>
+                          <InputGroupAddon type="append">
+                            <InputGroupText>%</InputGroupText>
+                          </InputGroupAddon>
+                        </InputGroup>
+                      </div>
+                    </Col>
+                  </Row>
+
                   <Row form>
                     <Col md="6" className="form-group">
                       <strong className="text-muted d-block mb-2">
@@ -635,7 +876,7 @@ const Tradings = ({ client }) => {
                       </strong>
                       <div>
                         <InputGroup className="mb-2">
-                          <FormSelect>
+                          <FormSelect onChange={evt => {setCycleType(evt.target.value)}}>
                             <option>單次循環</option>
                             <option>循環做單</option>
                           </FormSelect>
@@ -686,7 +927,7 @@ const Tradings = ({ client }) => {
                   </Row>
 
                   <Row form>
-                  <Col className="form-group">
+                    <Col className="form-group">
                       <strong className="text-muted d-block mb-2">
                         首單金額
                       </strong>
@@ -728,6 +969,8 @@ const Tradings = ({ client }) => {
        : null}
 
     {/* Default Light Table */}
+    
+    
     <Row>
       <Col>
         <Card small className="mb-4">
@@ -751,71 +994,170 @@ const Tradings = ({ client }) => {
                     均價
                   </th>
                   <th scope="col" className="border-0">
-                    模式
+                    持有數量
                   </th>
                   <th scope="col" className="border-0">
-                    首單金額
+                    模式
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {
+                  
                   briefBotInfoArray.map((s, i) => {
-                    return (
-                    <tr key={i}>
-                      <td>{s.brfIdx}</td>
-                      <td>{s.brfExch}</td>
-                      <td>{s.brfSymbol}</td>
-                      <td>{s.brfAvgPrice}</td>
-                      <td>{s.brfMode}</td>
-                      <td>{s.brfQty}</td>
-                    </tr>
-                    );
+                    return renderResultRows(s)
                   })
+                  
                 }
-
-                {/*
-                <tr>
-                  <td>1</td>
-                  <td>Ali</td>
-                  <td>Kerry</td>
-                  <td>Russian Federation</td>
-                  <td>Gdańsk</td>
-                  <td>107-0339</td>
-                </tr>
-                <tr>
-                  <td>2</td>
-                  <td>Clark</td>
-                  <td>Angela</td>
-                  <td>Estonia</td>
-                  <td>Borghetto di Vara</td>
-                  <td>1-660-850-1647</td>
-                </tr>
-                <tr>
-                  <td>3</td>
-                  <td>Jerry</td>
-                  <td>Nathan</td>
-                  <td>Cyprus</td>
-                  <td>Braunau am Inn</td>
-                  <td>214-4225</td>
-                </tr>
-                <tr>
-                  <td>4</td>
-                  <td>Colt</td>
-                  <td>Angela</td>
-                  <td>Liberia</td>
-                  <td>Bad Hersfeld</td>
-                  <td>1-848-473-7416</td>
-                </tr>
-                */}
               </tbody>
             </table>
           </CardBody>
         </Card>
+        {expandTableDetails != 0 ?
+        (<Card small className="mb-4 overflow-hidden">
+          <CardHeader className="bg-dark">
+            <h6 className="m-0 text-white">詳細資料</h6>
+          </CardHeader>
+          <CardBody className="p-0 pb-3 bg-dark">
+            <table className="table table-dark mb-0">
+              <thead className="thead-dark">
+                <tr>
+                  <th scope="col" className="border-0">
+                    #
+                  </th>
+                  <th scope="col" className="border-0">
+                    已啟動
+                  </th>
+                  <th scope="col" className="border-0">
+                    購買單數
+                  </th>
+                  <th scope="col" className="border-0">
+                    槓桿倍數
+                  </th>
+                  <th scope="col" className="border-0">
+                    循環方式
+                  </th>
+                  <th scope="col" className="border-0">
+                    最大回撤
+                  </th>
+                  <th scope="col" className="border-0">
+                    首單金額
+                  </th>
+                  <th scope="col" className="border-0">
+                    偵測％
+                  </th>
+                  <th scope="col" className="border-0">
+                    回彈％
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {
+                  
+                  detailBotInfoArray.map((s, i) => {
+                    return (
+                      <tr key={i}>
+                        <td>{s.dtlIdx}</td>
+                        <td>{s.dtlActive}</td>
+                        <td>{s.dtlOrderNum}</td>
+                        <td>{s.dtlLeverage}</td>
+                        <td>{s.dtlCycle}</td>
+                        <td>{s.dtlMaxDrawdown}</td>
+                        <td>{s.dtlQty}</td>
+                        <td>{s.dtlDrop}</td>
+                        <td>{s.dtlGoUp}</td>
+                      </tr>
+                    )
+                  })
+                  
+                }
+              </tbody>
+            </table>
+          </CardBody>
+          <CardHeader className="bg-dark">
+            <h6 className="m-0 text-white">訂單</h6>
+          </CardHeader>
+          <CardBody className="p-0 pb-3 bg-dark">
+            <ListGroup flush>
+              <ListGroupItem className="px-3 bg-dark">
+                <Row form>
+                  <Col md="6" className="form-group">
+                    <strong className="text-muted d-block mb-2">
+                      單號
+                    </strong>
+                    <div>
+                      <InputGroup className="mb-2">
+                        <FormSelect onChange={evt => {setOrderIdName(evt.target.value)}}>
+                          {
+                            orderIdArray.map((s, i) => {
+                              return (<option key={i}>{s}</option>);
+                            })
+                          }
+                        </FormSelect>
+                      </InputGroup>
+                    </div>
+                  </Col>
+                  <Col md="6" className="form-group">
+                    <strong className="text-muted d-block mb-2">
+                      個單數據
+                    </strong>
+                    <div>
+                      <CardBody className="p-0">
+                        <ListGroup small flush className="list-group-small">
+                          {orderIdName != '' && orderIdName != '請選擇' ? 
+                            referralData.map((item, idx) => (
+                            <ListGroupItem key={idx} className="d-flex px-3">
+                              <span className="text-semibold text-fiord-blue">{item.title}</span>
+                              <span className="ml-auto text-right text-semibold text-reagent-gray">
+                                {item.value}
+                              </span>
+                            </ListGroupItem>
+                          )) : null}
+                        </ListGroup>
+                      </CardBody>
+                    </div>
+                  </Col>
+                </Row>
+                
+                <Row form>
+                  <Col md="6" className="form-group">
+                    <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+                      <Button onClick={() => {
+                        isClosePosition ? setIsClosePosition(false) : setIsClosePosition(true)
+                        }} outline theme="success" >
+                        一鍵平倉
+                      </Button>
+                      {isClosePosition ?
+                      <InputGroup className="ml-2">
+                        <FormInput placeholder="請輸入'YES'" onChange={evt => {setConfirmClosePosition(evt.target.value)}}/>
+                        <InputGroupAddon type="append">
+                          <Button onClick={() => {
+                            if (confirmClosePosition == 'YES') {
+                              //console.log('Close Position')
+                              askClosePosition();
+                              setIsClosePosition(false);
+                            }
+                          }} outline theme="success">
+                            確定平倉
+                          </Button>
+                        </InputGroupAddon>
+                      </InputGroup>
+                      : null
+                      }
+                    </div>
+                  </Col>
+                </Row>
+                
+                
+              </ListGroupItem>
+            </ListGroup>
+          </CardBody>
+        </Card>)
+        : null}
       </Col>
     </Row>
 
-  </Container>
+    </Container>
 );}
 
 export default Tradings;

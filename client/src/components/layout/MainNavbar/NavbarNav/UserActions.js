@@ -1,3 +1,4 @@
+import { getAuth, signOut } from "firebase/auth";
 import React from "react";
 import { Link } from "react-router-dom";
 import {
@@ -9,6 +10,18 @@ import {
   NavItem,
   NavLink
 } from "shards-react";
+
+//export var isSignOut;
+
+export var IsSignOut = React.createContext({
+  isSignOut: false,
+  setIsSignOut: (auth) => {}
+});
+
+const SignOut = (value) => {
+  const {setIsSignOut} = React.useContext(IsSignOut);
+  setIsSignOut(true);
+}
 
 export default class UserActions extends React.Component {
   constructor(props) {
@@ -25,6 +38,17 @@ export default class UserActions extends React.Component {
     this.setState({
       visible: !this.state.visible
     });
+  }
+
+  signout() {
+    SignOut(true);
+    const auth = getAuth();
+    signOut(auth).then(() => {
+      console.log('Sign-out successful.')
+    }).catch((error) => {
+      console.log('An error happened.')
+    });
+    
   }
 
   render() {
@@ -52,7 +76,7 @@ export default class UserActions extends React.Component {
             <i className="material-icons">&#xE896;</i> Transactions
           </DropdownItem>
           <DropdownItem divider />
-          <DropdownItem tag={(props) => <Link {...props} />} to="/" className="text-danger">
+          <DropdownItem tag={(props) => <Link {...props} />} to="/" className="text-danger" onClick={this.signout}>
             <i className="material-icons text-danger">&#xE879;</i> Logout
           </DropdownItem>
         </Collapse>

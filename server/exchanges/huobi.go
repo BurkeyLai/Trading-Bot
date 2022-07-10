@@ -489,3 +489,8 @@ func (wrapper *HuobiWrapper) AskOrderList(mode string, market *environment.Marke
 	}
 
 }
+
+func (wrapper *HuobiWrapper) QueryOrder(mode, id, symbol string) (*binance.Order, error) {
+
+	return nil, nil
+}
