@@ -363,6 +363,7 @@ func (s *Server) LaunchBot(
 			}
 			bot.Market = m1
 			bot.Online = online
+			bot.ClosePosition = make(chan bool, 1)
 			bot.ShutDown = make(chan bool, 1)
 
 			var exchBots map[string]strategies.SpotBotStrategy
@@ -590,17 +591,7 @@ func (s *Server) ClosePosition(ctx context.Context, req *proto.ClosePositionRequ
 			profit := (price - bot.AvgPrice) * TotalQty
 			fmt.Println("Profit: " + fmt.Sprint(profit))
 
-			go func() {
-				bot.ShutDown <- true
-			}()
-
-			for {
-				isShutDown, ok := <-bot.ShutDown
-				fmt.Println("isShutDown: " + fmt.Sprint(isShutDown))
-				if !ok {
-					break
-				}
-			}
+			bot.ClosePosition <- true
 		} else {
 			return &proto.ClosePositionRespond{}, nil
 		}
@@ -637,41 +628,55 @@ func main() {
 		Firestore:   client,
 		SpotManager: func(bots map[string]map[string]map[string]strategies.SpotBotStrategy) error {
 			var err error
+
 			copy_bots := bots
 			for err == nil {
-				//fmt.Println("-----------------------")
-				var id, exch, symbol string
-				for i, exchs := range copy_bots {
-					//fmt.Println("user id: " + i)
-					for e, symbols := range exchs {
-						//fmt.Println("exchange: " + e)
-						for s, bot := range symbols {
-							sd := <-bot.ShutDown
-							//fmt.Println("symbol: " + s)
-							//fmt.Print("ShutDown: ")
-							//fmt.Println(sd)
+				wait1 := sync.WaitGroup{}
+				//done1 := make(chan int)
+				wait1.Add(1)
 
-							if sd {
-								//delete(symbols, symbol)
-								id = i
-								exch = e
-								symbol = s
-								close(bot.ShutDown)
-								//fmt.Println("++++++++++++++++++++++")
-								//fmt.Println(bot.Model.Name)
-								//fmt.Println("++++++++++++++++++++++")
+				//fmt.Println("-----------------------")
+				go func() {
+					defer wait1.Done()
+					var id, exch, symbol string
+					for i, exchs := range copy_bots {
+						//fmt.Println("user id: " + i)
+						for e, symbols := range exchs {
+							//fmt.Println("exchange: " + e)
+							for s, bot := range symbols {
+								sd := <-bot.ShutDown
+								//fmt.Println("symbol: " + s)
+								//fmt.Print("ShutDown: ")
+								//fmt.Println(sd)
+
+								if sd {
+									//delete(symbols, symbol)
+									id = i
+									exch = e
+									symbol = s
+									close(bot.ShutDown)
+									fmt.Println("++++++++++++++++++++++")
+									fmt.Println(bot.Model.Name)
+									fmt.Println("++++++++++++++++++++++")
+								}
 							}
 						}
 					}
-				}
-				//delete(bots[id][exch], symbol)
+					//delete(bots[id][exch], symbol)
 
-				userExch := bots[id]
-				exchMarkets := userExch[exch]
-				delete(exchMarkets, symbol)
+					userExch := bots[id]
+					exchMarkets := userExch[exch]
+					delete(exchMarkets, symbol)
+
+				}()
+				go func() {
+					wait1.Wait()
+					//	close(done1)
+				}()
+				//<-done1
 
 				//fmt.Println("-----------------------")
-				//time.Sleep(time.Second * 5)
+				time.Sleep(time.Second * 5)
 			}
 
 			return nil
@@ -745,6 +750,11 @@ func main() {
 			Id:      doc.Ref.ID,
 			Exchcfg: exchCfg,
 		}
+
+		//if user.Id != "8GvKxUkTqfMpQMWTaVizOLxw9sj2" {
+		//	continue
+		//}
+
 		name, err := doc.DataAt("name")
 		if name != nil && err == nil {
 			switch t := name.(type) {

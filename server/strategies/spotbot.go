@@ -49,6 +49,7 @@ type SpotBotStrategy struct {
 	Market         *environment.Market
 	Doc            *firestore.DocumentRef
 	Online         bool
+	ClosePosition  chan bool
 	ShutDown       chan bool
 }
 
@@ -92,9 +93,6 @@ func (s SpotBotStrategy) UpdateAvgPrice(wrapper exchanges.ExchangeWrapper, marke
 		return AvgPrice
 	} else {
 		fmt.Println("幣種存額小於等於0，賣出的幣種數量已高於此機器人所購買的幣種的量")
-		go func() {
-			s.ShutDown <- true
-		}()
 		return 0.0
 	}
 }
@@ -264,18 +262,16 @@ func (s SpotBotStrategy) Apply(wrappers []exchanges.ExchangeWrapper, markets []*
 	var err error
 	var last_lastPrice_low, last_lastPrice_high float64
 	var buy_again, sell_again bool
-	var isShutDown, ok bool
+	var isShutDown bool
+	var ok bool
 	buy_again = false
 	sell_again = false
 	isShutDown = false
 	ok = true
 
-	go func() {
-		s.ShutDown <- false
-	}()
-	go func() {
-		isShutDown, ok = <-s.ShutDown
-	}()
+	s.ClosePosition <- false
+	s.ShutDown <- false
+	isShutDown, ok = <-s.ShutDown
 
 	hasSetupFunc := s.Model.Setup != nil
 	hasTearDownFunc := s.Model.TearDown != nil
@@ -288,7 +284,14 @@ func (s SpotBotStrategy) Apply(wrappers []exchanges.ExchangeWrapper, markets []*
 			s.Model.OnError(err)
 		}
 
-		s.AvgPrice, _ = markets[0].Summary.Last.Float64()
+		if s.Online {
+			s.AvgPrice, _ = markets[0].Summary.Last.Float64()
+		} else {
+			s.AvgPrice = s.UpdateAvgPrice(wrappers[0], markets[0])
+			if s.AvgPrice == 0.0 {
+				isShutDown = true
+			}
+		}
 		s.Market = markets[0]
 		last_lastPrice_low = s.AvgPrice
 		last_lastPrice_high = s.AvgPrice
@@ -311,9 +314,8 @@ func (s SpotBotStrategy) Apply(wrappers []exchanges.ExchangeWrapper, markets []*
 			} else {
 				fmt.Println("無")
 				s.UpdateBotInfo("Shut Down Bot!", wrappers[0].Name(), markets[0].Balance)
-				go func() {
-					s.ShutDown <- true
-				}()
+				isShutDown = true
+				s.ShutDown <- true
 				return
 			}
 		}
@@ -338,17 +340,19 @@ func (s SpotBotStrategy) Apply(wrappers []exchanges.ExchangeWrapper, markets []*
 		s.Market = market
 		lastPrice, _ := market.Summary.Last.Float64()
 
-		fmt.Println(s.UserId + ": " + s.Model.Name + " " + market.Name + " - AvgPrice: " + fmt.Sprint(s.AvgPrice) + " | lastPrice: " + fmt.Sprint(lastPrice) + " | last_lastPrice_low: " + fmt.Sprint(last_lastPrice_low) + " | last_lastPrice_high: " + fmt.Sprint(last_lastPrice_high))
+		//fmt.Println(s.UserId + ": " + s.Model.Name + " " + market.Name + " - AvgPrice: " + fmt.Sprint(s.AvgPrice) + " | lastPrice: " + fmt.Sprint(lastPrice) + " | last_lastPrice_low: " + fmt.Sprint(last_lastPrice_low) + " | last_lastPrice_high: " + fmt.Sprint(last_lastPrice_high))
+
 		if buy_again || sell_again || last_lastPrice_low <= s.AvgPrice*(1.0-s.ActivePercent) || last_lastPrice_high >= s.AvgPrice*(1.0+s.ActivePercent) {
+
 			var id string
 			if buy_again || last_lastPrice_low <= s.AvgPrice*(1.0-s.ActivePercent) {
 				id = func(last_lastPrice float64, lastPrice float64, AvgPrice float64, GoUpPercent float64) string {
 					DropPrice := AvgPrice - last_lastPrice
 					GoUpPrice := lastPrice - last_lastPrice
-					fmt.Println(s.UserId + ": " + s.Model.Name + " DropPrice: " + fmt.Sprint(DropPrice) + " | GoUpPrice: " + fmt.Sprint(GoUpPrice))
+					//fmt.Println(s.UserId + ": " + s.Model.Name + " DropPrice: " + fmt.Sprint(DropPrice) + " | GoUpPrice: " + fmt.Sprint(GoUpPrice))
 					if buy_again || (DropPrice > 0 && GoUpPrice > 0 && GoUpPrice >= DropPrice*GoUpPercent) {
 						// BuyMarket
-						fmt.Println(s.UserId + ": " + s.Model.Name + " DropPrice*GoUpPercent: " + fmt.Sprint(DropPrice*GoUpPercent))
+						//fmt.Println(s.UserId + ": " + s.Model.Name + " DropPrice*GoUpPercent: " + fmt.Sprint(DropPrice*GoUpPercent))
 						return s.LaunchOrder(wrappers[0], market, lastPrice, &buy_again, "buy")
 					}
 					return ""
@@ -359,6 +363,9 @@ func (s SpotBotStrategy) Apply(wrappers []exchanges.ExchangeWrapper, markets []*
 					}
 					s.OrderIdList = append(s.OrderIdList, id)
 					s.AvgPrice = s.UpdateAvgPrice(wrappers[0], market)
+					if s.AvgPrice == 0.0 {
+						isShutDown = true
+					}
 					last_lastPrice_low = s.AvgPrice
 					s.UpdateBotInfo("Update Bot Info!", wrappers[0].Name(), market.Balance)
 				}
@@ -366,10 +373,10 @@ func (s SpotBotStrategy) Apply(wrappers []exchanges.ExchangeWrapper, markets []*
 				id = func(last_lastPrice float64, lastPrice float64, AvgPrice float64, GoDnPercent float64) string {
 					RisePrice := last_lastPrice - AvgPrice
 					GoDnPrice := last_lastPrice - lastPrice
-					fmt.Println(s.UserId + ": " + s.Model.Name + " RisePrice: " + fmt.Sprint(RisePrice) + " | GoDnPrice: " + fmt.Sprint(GoDnPrice))
+					//fmt.Println(s.UserId + ": " + s.Model.Name + " RisePrice: " + fmt.Sprint(RisePrice) + " | GoDnPrice: " + fmt.Sprint(GoDnPrice))
 					if sell_again || (RisePrice > 0 && GoDnPrice > 0 && GoDnPrice >= RisePrice*GoDnPercent) {
 						// SellMarket
-						fmt.Println(s.UserId + ": " + s.Model.Name + " RisePrice*GoDnPercent: " + fmt.Sprint(RisePrice*GoDnPercent))
+						//fmt.Println(s.UserId + ": " + s.Model.Name + " RisePrice*GoDnPercent: " + fmt.Sprint(RisePrice*GoDnPercent))
 						return s.LaunchOrder(wrappers[0], market, lastPrice, &sell_again, "sell")
 					}
 					return ""
@@ -381,13 +388,15 @@ func (s SpotBotStrategy) Apply(wrappers []exchanges.ExchangeWrapper, markets []*
 					s.OrderIdList = append(s.OrderIdList, id)
 					profit, _ := s.CalculateProfit(s.AvgPrice, lastPrice, id, wrappers[0])
 					s.AvgPrice = s.UpdateAvgPrice(wrappers[0], market)
+					if s.AvgPrice == 0.0 {
+						isShutDown = true
+					}
 					last_lastPrice_high = s.AvgPrice
 					s.UpdateBotInfo("Update Bot Info!", wrappers[0].Name(), market.Balance)
 					if s.CycleType == "single" {
 						fmt.Println("Profit: " + fmt.Sprint(profit))
-						go func() {
-							s.ShutDown <- true
-						}()
+						isShutDown = true
+						s.ShutDown <- true
 						break
 					} else {
 						fmt.Println("Profit: " + fmt.Sprint(profit))
@@ -404,13 +413,19 @@ func (s SpotBotStrategy) Apply(wrappers []exchanges.ExchangeWrapper, markets []*
 			last_lastPrice_high = lastPrice
 		}
 
-		//isShutDown, ok := <-s.ShutDown
-		fmt.Println("isShutDown: " + fmt.Sprint(isShutDown))
+		//fmt.Println(s.UserId + ": " + s.Model.Name + " | isShutDown: " + fmt.Sprint(isShutDown))
+
+		if isShutDown || <-s.ClosePosition {
+			s.ShutDown <- true
+		} else {
+			s.ClosePosition <- false
+			s.ShutDown <- false
+		}
 		if !ok {
 			fmt.Println("Shut Down")
 			break
 		}
-		fmt.Println("==================================================")
+		//fmt.Println("==================================================")
 		time.Sleep(s.Interval)
 	}
 	if hasTearDownFunc {
