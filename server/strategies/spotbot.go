@@ -197,6 +197,7 @@ func (s SpotBotStrategy) LaunchOrder(wrapper exchanges.ExchangeWrapper, market *
 		if balance >= s.Qty {
 			clientOrderId, err = wrapper.BuyMarket(market, amount)
 		} else {
+			*try_again = false
 			return ""
 		}
 	} else if action == "sell" {
@@ -206,6 +207,10 @@ func (s SpotBotStrategy) LaunchOrder(wrapper exchanges.ExchangeWrapper, market *
 			fmt.Println(err)
 		}
 		market.Orders = orders
+		if len(s.OrderIdList) == 0 {
+			*try_again = false
+			return ""
+		}
 		for _, orderId := range s.OrderIdList {
 			for _, order := range market.Orders {
 				if orderId == order.ClientOrderID {
@@ -227,6 +232,7 @@ func (s SpotBotStrategy) LaunchOrder(wrapper exchanges.ExchangeWrapper, market *
 		if balance >= TotalQty {
 			clientOrderId, err = wrapper.SellMarket(market, amount)
 		} else {
+			*try_again = false
 			return ""
 		}
 	}
@@ -417,6 +423,7 @@ func (s SpotBotStrategy) Apply(wrappers []exchanges.ExchangeWrapper, markets []*
 
 		if isShutDown || <-s.ClosePosition {
 			s.ShutDown <- true
+			ok = false
 		} else {
 			s.ClosePosition <- false
 			s.ShutDown <- false

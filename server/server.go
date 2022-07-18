@@ -680,7 +680,6 @@ func main() {
 			}
 
 			return nil
-
 		},
 	}
 
@@ -872,7 +871,6 @@ func main() {
 						m1,
 						nil,
 						client.Collection("User").Doc(user.Id))
-
 				}
 			}
 		}

@@ -21,7 +21,6 @@ import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { firestoreDB } from '..';
 import { doc, setDoc, getDoc, getDocs, query, orderBy, limit, where, collection, onSnapshot, collectionGroup } from "firebase/firestore"; 
 import PageTitle from "../components/common/PageTitle";
-import TopReferrals from "../components/common/TopReferrals";
 import {toast, ToastContainer} from 'react-toastify';
 import Toast from "../utils/toastify";
 import { RowComponent } from "../utils/rowComponent";
