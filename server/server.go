@@ -365,6 +365,7 @@ func (s *Server) LaunchBot(
 			bot.Online = online
 			bot.ClosePosition = make(chan bool, 1)
 			bot.ShutDown = make(chan bool, 1)
+			bot.NotOK = make(chan bool, 1)
 
 			var exchBots map[string]strategies.SpotBotStrategy
 			_, exchBotsExist := s.SpotBots[userId][exchName]
@@ -590,7 +591,15 @@ func (s *Server) ClosePosition(ctx context.Context, req *proto.ClosePositionRequ
 			}
 			profit := (price - bot.AvgPrice) * TotalQty
 			fmt.Println("Profit: " + fmt.Sprint(profit))
-
+			select {
+			case _, ok := <-bot.ClosePosition:
+				if ok {
+				} else {
+					fmt.Println("Channel closed!")
+				}
+			default:
+				fmt.Println("No value ready, moving on.")
+			}
 			bot.ClosePosition <- true
 		} else {
 			return &proto.ClosePositionRespond{}, nil
@@ -654,7 +663,18 @@ func main() {
 									id = i
 									exch = e
 									symbol = s
+									close(bot.ClosePosition)
 									close(bot.ShutDown)
+									select {
+									case _, ok := <-bot.NotOK:
+										if ok {
+										} else {
+											fmt.Println("Channel closed!")
+										}
+									default:
+										fmt.Println("No value ready, moving on.")
+									}
+									bot.NotOK <- true
 									fmt.Println("++++++++++++++++++++++")
 									fmt.Println(bot.Model.Name)
 									fmt.Println("++++++++++++++++++++++")
@@ -663,11 +683,11 @@ func main() {
 						}
 					}
 					//delete(bots[id][exch], symbol)
-
-					userExch := bots[id]
-					exchMarkets := userExch[exch]
-					delete(exchMarkets, symbol)
-
+					if id != "" && exch != "" && symbol != "" {
+						userExch := bots[id]
+						exchMarkets := userExch[exch]
+						delete(exchMarkets, symbol)
+					}
 				}()
 				go func() {
 					wait1.Wait()

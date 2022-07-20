@@ -51,6 +51,7 @@ type SpotBotStrategy struct {
 	Online         bool
 	ClosePosition  chan bool
 	ShutDown       chan bool
+	NotOK          chan bool
 }
 
 // Name returns the name of the strategy.
@@ -269,15 +270,15 @@ func (s SpotBotStrategy) Apply(wrappers []exchanges.ExchangeWrapper, markets []*
 	var last_lastPrice_low, last_lastPrice_high float64
 	var buy_again, sell_again bool
 	var isShutDown bool
-	var ok bool
+	//var ok bool
 	buy_again = false
 	sell_again = false
 	isShutDown = false
-	ok = true
+	//ok = true
 
 	s.ClosePosition <- false
 	s.ShutDown <- false
-	isShutDown, ok = <-s.ShutDown
+	s.NotOK <- false
 
 	hasSetupFunc := s.Model.Setup != nil
 	hasTearDownFunc := s.Model.TearDown != nil
@@ -321,6 +322,15 @@ func (s SpotBotStrategy) Apply(wrappers []exchanges.ExchangeWrapper, markets []*
 				fmt.Println("無")
 				s.UpdateBotInfo("Shut Down Bot!", wrappers[0].Name(), markets[0].Balance)
 				isShutDown = true
+				select {
+				case _, ok := <-s.ShutDown:
+					if ok {
+					} else {
+						fmt.Println("Channel closed!")
+					}
+				default:
+					fmt.Println("No value ready, moving on.")
+				}
 				s.ShutDown <- true
 				return
 			}
@@ -340,6 +350,11 @@ func (s SpotBotStrategy) Apply(wrappers []exchanges.ExchangeWrapper, markets []*
 		err = s.Model.OnUpdate(wrappers, markets)
 		if err != nil && hasErrorFunc {
 			s.Model.OnError(err)
+		}
+
+		if <-s.NotOK {
+			close(s.NotOK)
+			break
 		}
 
 		market := markets[0]
@@ -402,6 +417,15 @@ func (s SpotBotStrategy) Apply(wrappers []exchanges.ExchangeWrapper, markets []*
 					if s.CycleType == "single" {
 						fmt.Println("Profit: " + fmt.Sprint(profit))
 						isShutDown = true
+						select {
+						case _, ok := <-s.ShutDown:
+							if ok {
+							} else {
+								fmt.Println("Channel closed!")
+							}
+						default:
+							fmt.Println("No value ready, moving on.")
+						}
 						s.ShutDown <- true
 						break
 					} else {
@@ -422,16 +446,24 @@ func (s SpotBotStrategy) Apply(wrappers []exchanges.ExchangeWrapper, markets []*
 		//fmt.Println(s.UserId + ": " + s.Model.Name + " | isShutDown: " + fmt.Sprint(isShutDown))
 
 		if isShutDown || <-s.ClosePosition {
+			select {
+			case _, ok := <-s.ShutDown:
+				if ok {
+				} else {
+					fmt.Println("Channel closed!")
+				}
+			default:
+				fmt.Println("No value ready, moving on.")
+			}
 			s.ShutDown <- true
-			ok = false
+			//ok = false
 		} else {
 			s.ClosePosition <- false
 			s.ShutDown <- false
+			s.NotOK <- false
 		}
-		if !ok {
-			fmt.Println("Shut Down")
-			break
-		}
+		//if !ok {
+
 		//fmt.Println("==================================================")
 		time.Sleep(s.Interval)
 	}

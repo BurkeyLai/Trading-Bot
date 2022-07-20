@@ -76,7 +76,7 @@ const Tradings = ({ client }) => {
     const [orderIdArray, setOrderIdArray] = useState([]);
     const [orderIdName, setOrderIdName] = useState('');
     const [referralData, setReferralData] = useState([]);
-    const [cycleType, setCycleType] = useState('');
+    const [cycleType, setCycleType] = useState('單次循環');
     const [isClosePosition, setIsClosePosition] = useState(false);
     const [confirmClosePosition, setConfirmClosePosition] = useState('');
     
@@ -875,7 +875,9 @@ const Tradings = ({ client }) => {
                       </strong>
                       <div>
                         <InputGroup className="mb-2">
-                          <FormSelect onChange={evt => {setCycleType(evt.target.value)}}>
+                          <FormSelect onChange={evt => {
+                              setCycleType(evt.target.value);
+                            }}>
                             <option>單次循環</option>
                             <option>循環做單</option>
                           </FormSelect>
