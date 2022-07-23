@@ -43,6 +43,7 @@ type SpotBotStrategy struct {
 	Qty            float64
 	ActivePercent  float64
 	ReversePercent float64
+	CoverPosition  float64
 	OrderIdList    []string
 	Interval       time.Duration
 	Stream         proto.TradingBot_CreateStreamServer
@@ -64,41 +65,46 @@ func (s SpotBotStrategy) String() string {
 	return s.Name()
 }
 
-func (s SpotBotStrategy) UpdateAvgPrice(wrapper exchanges.ExchangeWrapper, market *environment.Market) float64 {
-	TotalUsd := 0.0
-	TotalQty := 0.0
+func (s SpotBotStrategy) UpdateAvgPrice(wrapper exchanges.ExchangeWrapper, market *environment.Market) (float64, error) {
+	if len(s.OrderIdList) > 0 {
+		TotalUsd := 0.0
+		TotalQty := 0.0
 
-	orders, err := wrapper.AskOrderList("spot", market)
-	if err != nil {
-		fmt.Println(err)
-	}
-	market.Orders = orders
+		orders, err := wrapper.AskOrderList("spot", market)
+		if err != nil {
+			fmt.Println(err)
+		}
+		market.Orders = orders
 
-	for _, orderId := range s.OrderIdList {
-		for _, order := range market.Orders {
-			if orderId == order.ClientOrderID {
-				usd, _ := strconv.ParseFloat(order.CummulativeQuoteQuantity, 64)
-				qty, _ := strconv.ParseFloat(order.ExecutedQuantity, 64)
-				if order.Side == "BUY" {
-					TotalUsd += usd
-					TotalQty += qty
+		for _, orderId := range s.OrderIdList {
+			for _, order := range market.Orders {
+				if orderId == order.ClientOrderID {
+					usd, _ := strconv.ParseFloat(order.CummulativeQuoteQuantity, 64)
+					qty, _ := strconv.ParseFloat(order.ExecutedQuantity, 64)
+					if order.Side == "BUY" {
+						TotalUsd += usd
+						TotalQty += qty
+					}
+					break
 				}
-				break
 			}
 		}
-	}
-	fmt.Println("TotalUsd: " + fmt.Sprint(TotalUsd))
-	fmt.Println("TotalQty: " + fmt.Sprint(TotalQty))
-	if TotalUsd >= 0 && TotalQty > 0 {
-		AvgPrice := TotalUsd / TotalQty
-		return AvgPrice
+		fmt.Println("TotalUsd: " + fmt.Sprint(TotalUsd))
+		fmt.Println("TotalQty: " + fmt.Sprint(TotalQty))
+		if TotalUsd >= 0 && TotalQty > 0 {
+			AvgPrice := TotalUsd / TotalQty
+			return AvgPrice, nil
+		} else {
+			//fmt.Println("幣種存額小於等於0，賣出的幣種數量已高於此機器人所購買的幣種的量")
+			return 0.0, errors.New("幣種存額小於等於0，賣出的幣種數量已高於此機器人所購買的幣種的量")
+		}
 	} else {
-		fmt.Println("幣種存額小於等於0，賣出的幣種數量已高於此機器人所購買的幣種的量")
-		return 0.0
+		return 0.0, nil
 	}
 }
 
 func (s SpotBotStrategy) UpdateBotInfo(content, exch, balance string) {
+	//fmt.Println("s.Qty: " + fmt.Sprint(s.Qty))
 	if s.Online {
 		msg := &proto.Message{
 			User: &proto.User{
@@ -111,6 +117,7 @@ func (s SpotBotStrategy) UpdateBotInfo(content, exch, balance string) {
 				Modelname:     s.Model.Name,
 				Avgprice:      fmt.Sprint(s.AvgPrice),
 				Symbolbalance: balance,
+				Quantity:      fmt.Sprint(s.Qty),
 				Orderidlist:   s.OrderIdList,
 			},
 			Content:   content,
@@ -155,6 +162,7 @@ func (s SpotBotStrategy) UpdateBotInfo(content, exch, balance string) {
 									val.SetMapIndex(reflect.ValueOf("average_price"), reflect.ValueOf(fmt.Sprint(s.AvgPrice)))
 									val.SetMapIndex(reflect.ValueOf("order_id_list"), reflect.ValueOf(s.OrderIdList))
 									val.SetMapIndex(reflect.ValueOf("symbol_balance"), reflect.ValueOf(balance))
+									val.SetMapIndex(reflect.ValueOf("quantity"), reflect.ValueOf(fmt.Sprint(s.Qty)))
 
 									s.Doc.Set(ctx, map[string]interface{}{
 										"bots_array": bots_array,
@@ -168,6 +176,57 @@ func (s SpotBotStrategy) UpdateBotInfo(content, exch, balance string) {
 				}
 				break
 			}
+		}
+	}
+}
+
+func (s SpotBotStrategy) DeleteBotInfo(exch string) {
+	if s.Model.Name != "" {
+		ctx := context.Background()
+		userSnap := s.Doc.Snapshots(ctx)
+
+		for {
+			snap, err := userSnap.Next()
+			if err == iterator.Done {
+				break
+			}
+			bots_array, err := snap.DataAt("bots_array")
+			if bots_array != nil {
+				var delete_idx int
+				switch t := bots_array.(type) {
+				case []interface{}:
+					var botExchname, botMode, botSymbol string
+					for idx, bot := range t {
+						// Search the bot data
+						val := reflect.ValueOf(bot)
+						if val.Kind() == reflect.Map {
+							for _, key := range val.MapKeys() {
+								v := val.MapIndex(key)
+								switch value := v.Interface().(type) {
+								case string:
+									switch key.String() {
+									case "symbol":
+										botSymbol = value
+									case "exchange":
+										botExchname = value
+									case "mode":
+										botMode = value
+									}
+								}
+							}
+							if botExchname == exch && botMode == "spot" && botSymbol == s.Model.Name {
+								delete_idx = idx
+								break
+							}
+						}
+					}
+					bots_array = append(t[:delete_idx], t[delete_idx+1:]...)
+					s.Doc.Set(ctx, map[string]interface{}{
+						"bots_array": bots_array,
+					}, firestore.MergeAll)
+				}
+			}
+			break
 		}
 	}
 }
@@ -294,8 +353,9 @@ func (s SpotBotStrategy) Apply(wrappers []exchanges.ExchangeWrapper, markets []*
 		if s.Online {
 			s.AvgPrice, _ = markets[0].Summary.Last.Float64()
 		} else {
-			s.AvgPrice = s.UpdateAvgPrice(wrappers[0], markets[0])
-			if s.AvgPrice == 0.0 {
+			s.AvgPrice, err = s.UpdateAvgPrice(wrappers[0], markets[0])
+			if err != nil {
+				fmt.Println(err)
 				isShutDown = true
 			}
 		}
@@ -317,6 +377,7 @@ func (s SpotBotStrategy) Apply(wrappers []exchanges.ExchangeWrapper, markets []*
 			if id != "" {
 				fmt.Println("有")
 				s.OpenPrice = s.AvgPrice
+				s.Qty = s.Qty * s.CoverPosition
 				s.OrderIdList = append(s.OrderIdList, id)
 			} else {
 				fmt.Println("無")
@@ -352,8 +413,23 @@ func (s SpotBotStrategy) Apply(wrappers []exchanges.ExchangeWrapper, markets []*
 			s.Model.OnError(err)
 		}
 
-		if <-s.NotOK {
-			close(s.NotOK)
+		//fmt.Println(s.Model.Name)
+		terminate := false
+		select {
+		case notOK, ok := <-s.NotOK:
+			if ok {
+				if notOK {
+					s.DeleteBotInfo(wrappers[0].Name())
+					close(s.NotOK)
+					terminate = true
+				}
+			} else {
+				fmt.Println("Channel closed!")
+			}
+		default:
+			fmt.Println("No value ready, moving on.")
+		}
+		if terminate {
 			break
 		}
 
@@ -382,9 +458,11 @@ func (s SpotBotStrategy) Apply(wrappers []exchanges.ExchangeWrapper, markets []*
 					if len(s.OrderIdList) == 0 {
 						s.OpenPrice = s.AvgPrice
 					}
+					s.Qty = s.Qty * s.CoverPosition
 					s.OrderIdList = append(s.OrderIdList, id)
-					s.AvgPrice = s.UpdateAvgPrice(wrappers[0], market)
-					if s.AvgPrice == 0.0 {
+					s.AvgPrice, err = s.UpdateAvgPrice(wrappers[0], market)
+					if err != nil {
+						fmt.Println(err)
 						isShutDown = true
 					}
 					last_lastPrice_low = s.AvgPrice
@@ -408,29 +486,30 @@ func (s SpotBotStrategy) Apply(wrappers []exchanges.ExchangeWrapper, markets []*
 					}
 					s.OrderIdList = append(s.OrderIdList, id)
 					profit, _ := s.CalculateProfit(s.AvgPrice, lastPrice, id, wrappers[0])
-					s.AvgPrice = s.UpdateAvgPrice(wrappers[0], market)
-					if s.AvgPrice == 0.0 {
+					s.AvgPrice, err = s.UpdateAvgPrice(wrappers[0], market)
+					if err != nil {
+						fmt.Println(err)
 						isShutDown = true
 					}
 					last_lastPrice_high = s.AvgPrice
+					s.OrderIdList = nil
 					s.UpdateBotInfo("Update Bot Info!", wrappers[0].Name(), market.Balance)
 					if s.CycleType == "single" {
 						fmt.Println("Profit: " + fmt.Sprint(profit))
 						isShutDown = true
-						select {
-						case _, ok := <-s.ShutDown:
-							if ok {
-							} else {
-								fmt.Println("Channel closed!")
-							}
-						default:
-							fmt.Println("No value ready, moving on.")
-						}
-						s.ShutDown <- true
-						break
+						//select {
+						//case _, ok := <-s.ShutDown:
+						//	if ok {
+						//	} else {
+						//		fmt.Println("Channel closed!")
+						//	}
+						//default:
+						//	fmt.Println("No value ready, moving on.")
+						//}
+						//s.ShutDown <- true
+						//break
 					} else {
 						fmt.Println("Profit: " + fmt.Sprint(profit))
-						s.OrderIdList = nil
 					}
 				}
 			}
@@ -443,9 +522,9 @@ func (s SpotBotStrategy) Apply(wrappers []exchanges.ExchangeWrapper, markets []*
 			last_lastPrice_high = lastPrice
 		}
 
-		//fmt.Println(s.UserId + ": " + s.Model.Name + " | isShutDown: " + fmt.Sprint(isShutDown))
-
 		if isShutDown || <-s.ClosePosition {
+			s.OrderIdList = nil
+			s.UpdateBotInfo("Update Bot Info!", wrappers[0].Name(), market.Balance)
 			select {
 			case _, ok := <-s.ShutDown:
 				if ok {

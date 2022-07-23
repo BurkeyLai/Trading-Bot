@@ -1728,7 +1728,7 @@ proto.proto.Message.prototype.setTimestamp = function(value) {
  * @private {!Array<number>}
  * @const
  */
-proto.proto.BotInfo.repeatedFields_ = [6];
+proto.proto.BotInfo.repeatedFields_ = [7];
 
 
 
@@ -1766,7 +1766,8 @@ proto.proto.BotInfo.toObject = function(includeInstance, msg) {
     modelname: jspb.Message.getFieldWithDefault(msg, 3, ""),
     avgprice: jspb.Message.getFieldWithDefault(msg, 4, ""),
     symbolbalance: jspb.Message.getFieldWithDefault(msg, 5, ""),
-    orderidlistList: (f = jspb.Message.getRepeatedField(msg, 6)) == null ? undefined : f
+    quantity: jspb.Message.getFieldWithDefault(msg, 6, ""),
+    orderidlistList: (f = jspb.Message.getRepeatedField(msg, 7)) == null ? undefined : f
   };
 
   if (includeInstance) {
@@ -1824,6 +1825,10 @@ proto.proto.BotInfo.deserializeBinaryFromReader = function(msg, reader) {
       msg.setSymbolbalance(value);
       break;
     case 6:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setQuantity(value);
+      break;
+    case 7:
       var value = /** @type {string} */ (reader.readString());
       msg.addOrderidlist(value);
       break;
@@ -1891,10 +1896,17 @@ proto.proto.BotInfo.serializeBinaryToWriter = function(message, writer) {
       f
     );
   }
+  f = message.getQuantity();
+  if (f.length > 0) {
+    writer.writeString(
+      6,
+      f
+    );
+  }
   f = message.getOrderidlistList();
   if (f.length > 0) {
     writer.writeRepeatedString(
-      6,
+      7,
       f
     );
   }
@@ -1992,11 +2004,29 @@ proto.proto.BotInfo.prototype.setSymbolbalance = function(value) {
 
 
 /**
- * repeated string orderidlist = 6;
+ * optional string quantity = 6;
+ * @return {string}
+ */
+proto.proto.BotInfo.prototype.getQuantity = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 6, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.proto.BotInfo} returns this
+ */
+proto.proto.BotInfo.prototype.setQuantity = function(value) {
+  return jspb.Message.setProto3StringField(this, 6, value);
+};
+
+
+/**
+ * repeated string orderidlist = 7;
  * @return {!Array<string>}
  */
 proto.proto.BotInfo.prototype.getOrderidlistList = function() {
-  return /** @type {!Array<string>} */ (jspb.Message.getRepeatedField(this, 6));
+  return /** @type {!Array<string>} */ (jspb.Message.getRepeatedField(this, 7));
 };
 
 
@@ -2005,7 +2035,7 @@ proto.proto.BotInfo.prototype.getOrderidlistList = function() {
  * @return {!proto.proto.BotInfo} returns this
  */
 proto.proto.BotInfo.prototype.setOrderidlistList = function(value) {
-  return jspb.Message.setField(this, 6, value || []);
+  return jspb.Message.setField(this, 7, value || []);
 };
 
 
@@ -2015,7 +2045,7 @@ proto.proto.BotInfo.prototype.setOrderidlistList = function(value) {
  * @return {!proto.proto.BotInfo} returns this
  */
 proto.proto.BotInfo.prototype.addOrderidlist = function(value, opt_index) {
-  return jspb.Message.addToRepeatedField(this, 6, value, opt_index);
+  return jspb.Message.addToRepeatedField(this, 7, value, opt_index);
 };
 
 
@@ -2498,7 +2528,8 @@ proto.proto.CreateOrderRequest.toObject = function(includeInstance, msg) {
     leverage: jspb.Message.getFieldWithDefault(msg, 9, ""),
     maxdrawdown: jspb.Message.getFieldWithDefault(msg, 10, ""),
     withdrawspot: jspb.Message.getFieldWithDefault(msg, 11, ""),
-    quantity: jspb.Message.getFieldWithDefault(msg, 12, "")
+    quantity: jspb.Message.getFieldWithDefault(msg, 12, ""),
+    coverposition: jspb.Message.getFieldWithDefault(msg, 13, "")
   };
 
   if (includeInstance) {
@@ -2583,6 +2614,10 @@ proto.proto.CreateOrderRequest.deserializeBinaryFromReader = function(msg, reade
     case 12:
       var value = /** @type {string} */ (reader.readString());
       msg.setQuantity(value);
+      break;
+    case 13:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setCoverposition(value);
       break;
     default:
       reader.skipField();
@@ -2695,6 +2730,13 @@ proto.proto.CreateOrderRequest.serializeBinaryToWriter = function(message, write
   if (f.length > 0) {
     writer.writeString(
       12,
+      f
+    );
+  }
+  f = message.getCoverposition();
+  if (f.length > 0) {
+    writer.writeString(
+      13,
       f
     );
   }
@@ -2933,6 +2975,24 @@ proto.proto.CreateOrderRequest.prototype.getQuantity = function() {
  */
 proto.proto.CreateOrderRequest.prototype.setQuantity = function(value) {
   return jspb.Message.setProto3StringField(this, 12, value);
+};
+
+
+/**
+ * optional string coverposition = 13;
+ * @return {string}
+ */
+proto.proto.CreateOrderRequest.prototype.getCoverposition = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 13, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.proto.CreateOrderRequest} returns this
+ */
+proto.proto.CreateOrderRequest.prototype.setCoverposition = function(value) {
+  return jspb.Message.setProto3StringField(this, 13, value);
 };
 
 

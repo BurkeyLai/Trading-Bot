@@ -60,20 +60,21 @@ type Server struct {
 }
 
 type BotInfo struct {
-	average_price string
-	bot_active    bool
-	cycle_type    string
-	drop_percent  string
-	exchange      string
-	go_up_percent string
-	leverage      string
-	max_drawdown  string
-	mode          string
-	order_id_list []string
-	quantity      string
-	symbol        string
-	m_type        string
-	withdraw_spot string
+	average_price  string
+	bot_active     bool
+	cycle_type     string
+	drop_percent   string
+	exchange       string
+	go_up_percent  string
+	leverage       string
+	max_drawdown   string
+	mode           string
+	order_id_list  []string
+	quantity       string
+	symbol         string
+	m_type         string
+	withdraw_spot  string
+	cover_position string
 }
 
 var SpotBot = strategies.SpotBotStrategy{
@@ -152,10 +153,10 @@ func (s *Server) ExecuteStartCommand(user *proto.User) map[string]exchanges.Exch
 	exchnum := len(user.Exchcfg.Exchs)
 	wrappers := make(map[string]exchanges.ExchangeWrapper)
 	for i := 0; i < exchnum; i++ {
-		fmt.Println()
-		fmt.Println(user.Exchcfg.Exchs[i].Exchname)
-		fmt.Println(user.Exchcfg.Exchs[i].Spotpublickey)
-		fmt.Println(user.Exchcfg.Exchs[i].Spotsecretkey)
+		//fmt.Println()
+		//fmt.Println(user.Exchcfg.Exchs[i].Exchname)
+		//fmt.Println(user.Exchcfg.Exchs[i].Spotpublickey)
+		//fmt.Println(user.Exchcfg.Exchs[i].Spotsecretkey)
 		exchangeConfig := environment.ExchangeConfig{
 			ExchangeName:     user.Exchcfg.Exchs[i].Exchname,
 			SpotPublicKey:    user.Exchcfg.Exchs[i].Spotpublickey,
@@ -170,7 +171,7 @@ func (s *Server) ExecuteStartCommand(user *proto.User) map[string]exchanges.Exch
 			wrappers[user.Exchcfg.Exchs[i].Exchname] = helpers.InitExchange(exchangeConfig, false, make(map[string]decimal.Decimal), exchangeConfig.DepositAddresses)
 		}
 	}
-	fmt.Println("DONE")
+	fmt.Println("ExecuteStartCommand DONE")
 
 	return wrappers
 }
@@ -200,65 +201,73 @@ func (s *Server) CreateStream(pconn *proto.Connect, stream proto.TradingBot_Crea
 }
 
 func (s *Server) MarketInfo(ctx context.Context, req *proto.MarketInfoRequest) (*proto.MarketInfoRespond, error) {
-	fmt.Println(req.Msg.Content)
-	//fmt.Println(req.Msg.User.Id)
-	//fmt.Println(req.Exchange)
-	conn := s.Connections[req.Msg.User.Id]
-	wrapper := conn.exchanges[req.Exchange]
-	if wrapper == nil {
+	if req != nil {
+		fmt.Println(req.Msg.Content)
+		//fmt.Println(req.Msg.User.Id)
+		//fmt.Println(req.Exchange)
+		conn := s.Connections[req.Msg.User.Id]
+		if conn != nil {
+			wrapper := conn.exchanges[req.Exchange]
+			if wrapper == nil {
+				return &proto.MarketInfoRespond{}, nil
+			}
+			markets, err := wrapper.GetMarkets(req.Mode)
+			if err != nil {
+				fmt.Println(err)
+				return &proto.MarketInfoRespond{}, err
+			}
+
+			var requestType string
+			if req.Type == "usdt" {
+				if req.Exchange == "Huobi" {
+					requestType = "usdt"
+				} else if req.Exchange == "Binance" {
+					requestType = "USDT"
+				}
+			}
+
+			symbols := []string{}
+			for _, market := range markets {
+				if market.MarketCurrency == requestType {
+
+					if req.Mode == "spot" {
+						// If the bot serve that symbol is ignited, don't show that symbol
+						userExch := s.SpotBots[req.Msg.User.Id]
+						exchMarkets := userExch[strings.ToLower(req.Exchange)]
+						_, botExist := exchMarkets[market.Name]
+						if !botExist {
+							symbols = append(symbols, market.BaseCurrency+"/"+market.MarketCurrency)
+						}
+					} else {
+
+					}
+					//fmt.Printf("{" + market.Name + ": [" + market.BaseCurrency + ", " + market.MarketCurrency + "]} ")
+
+				}
+				//fmt.Println(market.MarketCurrency)
+			}
+			sort.Strings(symbols)
+			resp := &proto.MarketInfoRespond{
+				Timestamp: time.Now().String(),
+				Symbols:   symbols,
+			}
+
+			info := &proto.Message{
+				User: &proto.User{
+					Id:   conn.user.Id,
+					Name: conn.user.Name,
+				},
+				Content:   "Info received!",
+				Timestamp: time.Now().String(),
+			}
+			conn.stream.Send(info)
+			return resp, nil
+		} else {
+			return &proto.MarketInfoRespond{}, nil
+		}
+	} else {
 		return &proto.MarketInfoRespond{}, nil
 	}
-	markets, err := wrapper.GetMarkets(req.Mode)
-	if err != nil {
-		fmt.Println(err)
-		return &proto.MarketInfoRespond{}, err
-	}
-
-	var requestType string
-	if req.Type == "usdt" {
-		if req.Exchange == "Huobi" {
-			requestType = "usdt"
-		} else if req.Exchange == "Binance" {
-			requestType = "USDT"
-		}
-	}
-
-	symbols := []string{}
-	for _, market := range markets {
-		if market.MarketCurrency == requestType {
-
-			if req.Mode == "spot" {
-				// If the bot serve that symbol is ignited, don't show that symbol
-				userExch := s.SpotBots[req.Msg.User.Id]
-				exchMarkets := userExch[strings.ToLower(req.Exchange)]
-				_, botExist := exchMarkets[market.Name]
-				if !botExist {
-					symbols = append(symbols, market.BaseCurrency+"/"+market.MarketCurrency)
-				}
-			} else {
-
-			}
-			//fmt.Printf("{" + market.Name + ": [" + market.BaseCurrency + ", " + market.MarketCurrency + "]} ")
-
-		}
-		//fmt.Println(market.MarketCurrency)
-	}
-	sort.Strings(symbols)
-	resp := &proto.MarketInfoRespond{
-		Timestamp: time.Now().String(),
-		Symbols:   symbols,
-	}
-
-	info := &proto.Message{
-		User: &proto.User{
-			Id:   conn.user.Id,
-			Name: conn.user.Name,
-		},
-		Content:   "Info received!",
-		Timestamp: time.Now().String(),
-	}
-	conn.stream.Send(info)
-	return resp, nil
 }
 
 func (s *Server) LaunchBot(
@@ -269,6 +278,7 @@ func (s *Server) LaunchBot(
 	dropPercent,
 	goUpPercent,
 	cycleType,
+	coverPosition,
 	userId,
 	userName string,
 	orderList []string,
@@ -320,7 +330,7 @@ func (s *Server) LaunchBot(
 			}
 		}
 
-		fmt.Println()
+		//fmt.Println()
 		//fmt.Println(symbolSummary.Last)
 		//fmt.Println(symbolSummary.Ask)
 		//fmt.Println(symbolSummary.Bid)
@@ -334,7 +344,6 @@ func (s *Server) LaunchBot(
 		//fmt.Println(lotSizeMinQty)
 		//fmt.Println(lotSizeMaxQty)
 	}
-
 	if mode == "spot" {
 		mu.Lock()
 		//go func(wrapper exchanges.ExchangeWrapper, m1 *environment.Market) {
@@ -350,6 +359,7 @@ func (s *Server) LaunchBot(
 			bot.UserName = userName
 			bot.UserId = userId
 			bot.CycleType = cycleType
+			bot.CoverPosition, _ = strconv.ParseFloat(coverPosition, 64)
 			bot.Model.Name = symbolName
 			bot.ActivePercent, _ = strconv.ParseFloat(dropPercent, 64)
 			//bot.DropPercent = 0.0001
@@ -398,224 +408,257 @@ func (s *Server) LaunchBot(
 }
 
 func (s *Server) CreateOrder(ctx context.Context, req *proto.CreateOrderRequest) (*proto.CreateOrderRespond, error) {
-	userId := req.Msg.User.Id
-	userName := req.Msg.User.Name
-	conn := s.Connections[userId]
-	wrapper := conn.exchanges[req.Exchange]
-	if wrapper == nil {
+	if req != nil {
+		userId := req.Msg.User.Id
+		userName := req.Msg.User.Name
+		conn := s.Connections[userId]
+		if conn != nil {
+			wrapper := conn.exchanges[req.Exchange]
+			if wrapper == nil {
+				return &proto.CreateOrderRespond{}, nil
+			}
+
+			requestSymbol1 := req.Symbol
+			//requestSymbol2 := req.Symbol2
+			if req.Exchange == "Binance" {
+				requestSymbol1 = strings.ToUpper(requestSymbol1)
+				//requestSymbol2 = strings.ToUpper(requestSymbol2)
+			}
+			if requestSymbol1 == "" {
+				return &proto.CreateOrderRespond{}, nil
+			}
+			strs1 := strings.Split(requestSymbol1, "/")
+			m1 := &environment.Market{
+				Name:           strs1[0] + strs1[1],
+				BaseCurrency:   strs1[0],
+				MarketCurrency: strs1[1],
+				ExchangeNames:  make(map[string]string),
+			}
+			m1.ExchangeNames[strings.ToLower(req.Exchange)] = m1.Name
+
+			//var m2 *environment.Market
+			//if requestSymbol2 == "" {
+			//	m2 = nil
+			//} else {
+			//	strs2 := strings.Split(requestSymbol2, "/")
+			//	m2 = &environment.Market{
+			//		Name:           strs2[0] + strs2[1],
+			//		BaseCurrency:   strs2[0],
+			//		MarketCurrency: strs2[1],
+			//		ExchangeNames:  make(map[string]string),
+			//	}
+			//	m2.ExchangeNames[strings.ToLower(req.Exchange)] = m2.Name
+			//}
+			resp := &proto.CreateOrderRespond{
+				Timestamp: time.Now().String(),
+				//Orderid:   "", // QcpN1VqXk5eUqclJp8phBd, dHWTBEkLGag7VgrUKXvwB6, 6jFjYMLjkZ3ZeqyGiyXe2V, THISO1GxXsemRMdb1eNXMB, iRQnkDYIVu3qohErr2pNxd, t0NZz29Xy55fEW3tDj2PJH, A8r41mK6gFpJ5l0ysvmlcq
+				Content:   "",
+				Botactive: false,
+			}
+			content, err := s.LaunchBot(
+				wrapper,
+				req.Mode,
+				req.Quantity,
+				req.Exchange,
+				req.Droppercent,
+				req.Gouppercent,
+				req.Cycletype,
+				req.Coverposition,
+				userId,
+				userName,
+				[]string{},
+				true,
+				m1,
+				&conn.stream,
+				nil)
+			resp.Content = content
+			if err != nil {
+				return resp, err
+			}
+
+			resp.Botactive = true
+			return resp, nil
+		} else {
+			return &proto.CreateOrderRespond{}, nil
+		}
+	} else {
 		return &proto.CreateOrderRespond{}, nil
 	}
-
-	requestSymbol1 := req.Symbol
-	//requestSymbol2 := req.Symbol2
-	if req.Exchange == "Binance" {
-		requestSymbol1 = strings.ToUpper(requestSymbol1)
-		//requestSymbol2 = strings.ToUpper(requestSymbol2)
-	}
-	if requestSymbol1 == "" {
-		return &proto.CreateOrderRespond{}, nil
-	}
-	strs1 := strings.Split(requestSymbol1, "/")
-	m1 := &environment.Market{
-		Name:           strs1[0] + strs1[1],
-		BaseCurrency:   strs1[0],
-		MarketCurrency: strs1[1],
-		ExchangeNames:  make(map[string]string),
-	}
-	m1.ExchangeNames[strings.ToLower(req.Exchange)] = m1.Name
-
-	//var m2 *environment.Market
-	//if requestSymbol2 == "" {
-	//	m2 = nil
-	//} else {
-	//	strs2 := strings.Split(requestSymbol2, "/")
-	//	m2 = &environment.Market{
-	//		Name:           strs2[0] + strs2[1],
-	//		BaseCurrency:   strs2[0],
-	//		MarketCurrency: strs2[1],
-	//		ExchangeNames:  make(map[string]string),
-	//	}
-	//	m2.ExchangeNames[strings.ToLower(req.Exchange)] = m2.Name
-	//}
-	resp := &proto.CreateOrderRespond{
-		Timestamp: time.Now().String(),
-		//Orderid:   "", // QcpN1VqXk5eUqclJp8phBd, dHWTBEkLGag7VgrUKXvwB6, 6jFjYMLjkZ3ZeqyGiyXe2V, THISO1GxXsemRMdb1eNXMB, iRQnkDYIVu3qohErr2pNxd, t0NZz29Xy55fEW3tDj2PJH, A8r41mK6gFpJ5l0ysvmlcq
-		Content:   "",
-		Botactive: false,
-	}
-	content, err := s.LaunchBot(
-		wrapper,
-		req.Mode,
-		req.Quantity,
-		req.Exchange,
-		req.Droppercent,
-		req.Gouppercent,
-		req.Cycletype,
-		userId,
-		userName,
-		[]string{},
-		true,
-		m1,
-		&conn.stream,
-		nil)
-	resp.Content = content
-	if err != nil {
-		return resp, err
-	}
-
-	resp.Botactive = true
-	return resp, nil
 }
 
 func (s *Server) AccountBalance(ctx context.Context, req *proto.AccountBalanceRequest) (*proto.AccountBalanceRespond, error) {
-	fmt.Println(req.Msg.Content)
-	conn := s.Connections[req.Msg.User.Id]
-	wrapper := conn.exchanges[req.Exchange]
-	if wrapper == nil || req.Mode == "" || req.Symbol == "" {
+	if req != nil {
+		fmt.Println(req.Msg.Content)
+		conn := s.Connections[req.Msg.User.Id]
+		if conn != nil {
+			wrapper := conn.exchanges[req.Exchange]
+			if wrapper == nil || req.Mode == "" || req.Symbol == "" {
+				return &proto.AccountBalanceRespond{}, nil
+			}
+			requestSymbol := req.Symbol
+			if req.Exchange == "Binance" {
+				requestSymbol = strings.ToUpper(requestSymbol)
+			}
+
+			balance, err := wrapper.GetBalance(req.Mode, requestSymbol)
+			if err != nil {
+				return &proto.AccountBalanceRespond{}, err
+			}
+
+			resp := &proto.AccountBalanceRespond{
+				Timestamp: time.Now().String(),
+				Balance:   balance.String(),
+			}
+
+			//fmt.Println(balance)
+
+			return resp, nil
+		} else {
+			return &proto.AccountBalanceRespond{}, nil
+		}
+	} else {
 		return &proto.AccountBalanceRespond{}, nil
 	}
-	requestSymbol := req.Symbol
-	if req.Exchange == "Binance" {
-		requestSymbol = strings.ToUpper(requestSymbol)
-	}
-
-	balance, err := wrapper.GetBalance(req.Mode, requestSymbol)
-	if err != nil {
-		return &proto.AccountBalanceRespond{}, err
-	}
-
-	resp := &proto.AccountBalanceRespond{
-		Timestamp: time.Now().String(),
-		Balance:   balance.String(),
-	}
-
-	//fmt.Println(balance)
-
-	return resp, nil
 }
 
 func (s *Server) OrderInfo(ctx context.Context, req *proto.OrderInfoRequest) (*proto.OrderInfoRespond, error) {
-	fmt.Println(req.Msg.Content)
-	conn := s.Connections[req.Msg.User.Id]
-	wrapper := conn.exchanges[req.Exchange]
-	if wrapper == nil || req.Mode == "" || req.Symbol == "" || req.Orderid == "" {
+	if req != nil {
+		fmt.Println(req.Msg.Content)
+		conn := s.Connections[req.Msg.User.Id]
+		if conn != nil {
+			wrapper := conn.exchanges[req.Exchange]
+			if wrapper == nil || req.Mode == "" || req.Symbol == "" || req.Orderid == "" {
+				return &proto.OrderInfoRespond{}, nil
+			}
+			requestSymbol := req.Symbol
+			if req.Exchange == "Binance" {
+				requestSymbol = strings.ToUpper(requestSymbol)
+			}
+
+			//fmt.Println(req)
+			order, err := wrapper.QueryOrder(req.Mode, req.Orderid, requestSymbol)
+			if err != nil {
+				return &proto.OrderInfoRespond{}, err
+			}
+
+			if order == nil {
+				return &proto.OrderInfoRespond{}, nil
+			}
+			qty, _ := strconv.ParseFloat(order.CummulativeQuoteQuantity, 64)
+			amount, _ := strconv.ParseFloat(order.ExecutedQuantity, 64)
+			price := fmt.Sprint(qty / amount)
+
+			resp := &proto.OrderInfoRespond{
+				Timestamp: fmt.Sprint(time.Unix(order.Time/1000, 0)),
+				Quantity:  order.CummulativeQuoteQuantity,
+				Amount:    order.ExecutedQuantity,
+				Price:     price,
+				Type:      string(order.Type),
+				Side:      string(order.Side),
+			}
+
+			//fmt.Println(balance)
+
+			return resp, nil
+		} else {
+			return &proto.OrderInfoRespond{}, nil
+		}
+	} else {
 		return &proto.OrderInfoRespond{}, nil
 	}
-	requestSymbol := req.Symbol
-	if req.Exchange == "Binance" {
-		requestSymbol = strings.ToUpper(requestSymbol)
-	}
-
-	//fmt.Println(req)
-	order, err := wrapper.QueryOrder(req.Mode, req.Orderid, requestSymbol)
-	if err != nil {
-		return &proto.OrderInfoRespond{}, err
-	}
-
-	if order == nil {
-		return &proto.OrderInfoRespond{}, nil
-	}
-	qty, _ := strconv.ParseFloat(order.CummulativeQuoteQuantity, 64)
-	amount, _ := strconv.ParseFloat(order.ExecutedQuantity, 64)
-	price := fmt.Sprint(qty / amount)
-
-	resp := &proto.OrderInfoRespond{
-		Timestamp: fmt.Sprint(time.Unix(order.Time/1000, 0)),
-		Quantity:  order.CummulativeQuoteQuantity,
-		Amount:    order.ExecutedQuantity,
-		Price:     price,
-		Type:      string(order.Type),
-		Side:      string(order.Side),
-	}
-
-	//fmt.Println(balance)
-
-	return resp, nil
 }
 
 func (s *Server) ClosePosition(ctx context.Context, req *proto.ClosePositionRequest) (*proto.ClosePositionRespond, error) {
-	userid := req.Msg.User.Id
-	exchange := req.Exchange
-	conn := s.Connections[userid]
-	wrapper := conn.exchanges[exchange]
-	if wrapper == nil || req.Mode == "" || req.Symbol == "" {
-		return &proto.ClosePositionRespond{}, nil
-	}
-	requestSymbol := req.Symbol
-	if exchange == "Binance" {
-		requestSymbol = strings.ToUpper(requestSymbol)
-	}
-
-	var clientOrderId string
-	if req.Mode == "spot" {
-		//bot := s.SpotBots[userid][strings.ToLower(exchange)][requestSymbol]
-		userExch := s.SpotBots[userid]
-		exchMarkets := userExch[strings.ToLower(exchange)]
-		bot, botExist := exchMarkets[requestSymbol]
-
-		if botExist {
-			market := bot.Market
-			lotSizeMinQty, _ := strconv.ParseFloat(market.LotSizeMinQty, 64)
-			minNotional, _ := strconv.ParseFloat(market.MinNotional, 64)
-			TotalQty := 0.0
-			orders, err := wrapper.AskOrderList("spot", market)
-			if err != nil {
-				fmt.Println(err)
-			}
-			market.Orders = orders
-			for _, orderId := range bot.OrderIdList {
-				for _, order := range market.Orders {
-					if orderId == order.ClientOrderID {
-						qty, _ := strconv.ParseFloat(order.ExecutedQuantity, 64)
-						if order.Side == "BUY" {
-							TotalQty += qty
-						}
-						break
-					}
-				}
-			}
-			price, _ := market.Summary.Last.Float64()
-			amount, err := utils.CorrectPrecision(TotalQty, price, lotSizeMinQty, minNotional)
-			if err != nil {
+	if req != nil {
+		userid := req.Msg.User.Id
+		exchange := req.Exchange
+		conn := s.Connections[userid]
+		if conn != nil {
+			wrapper := conn.exchanges[exchange]
+			if wrapper == nil || req.Mode == "" || req.Symbol == "" {
 				return &proto.ClosePositionRespond{}, nil
 			}
-			for {
-				clientOrderId, err = wrapper.SellMarket(market, amount)
-				if err != nil {
-					fmt.Println(err)
-					return &proto.ClosePositionRespond{}, err
-				}
-				if clientOrderId != "" {
-					break
-				}
+			requestSymbol := req.Symbol
+			if exchange == "Binance" {
+				requestSymbol = strings.ToUpper(requestSymbol)
 			}
-			profit := (price - bot.AvgPrice) * TotalQty
-			fmt.Println("Profit: " + fmt.Sprint(profit))
-			select {
-			case _, ok := <-bot.ClosePosition:
-				if ok {
+
+			var clientOrderId string
+			if req.Mode == "spot" {
+				//bot := s.SpotBots[userid][strings.ToLower(exchange)][requestSymbol]
+				userExch := s.SpotBots[userid]
+				exchMarkets := userExch[strings.ToLower(exchange)]
+				bot, botExist := exchMarkets[requestSymbol]
+
+				if botExist {
+					market := bot.Market
+					lotSizeMinQty, _ := strconv.ParseFloat(market.LotSizeMinQty, 64)
+					minNotional, _ := strconv.ParseFloat(market.MinNotional, 64)
+					TotalQty := 0.0
+					orders, err := wrapper.AskOrderList("spot", market)
+					if err != nil {
+						fmt.Println(err)
+					}
+					market.Orders = orders
+					for _, orderId := range bot.OrderIdList {
+						for _, order := range market.Orders {
+							if orderId == order.ClientOrderID {
+								qty, _ := strconv.ParseFloat(order.ExecutedQuantity, 64)
+								if order.Side == "BUY" {
+									TotalQty += qty
+								}
+								break
+							}
+						}
+					}
+					price, _ := market.Summary.Last.Float64()
+					amount, err := utils.CorrectPrecision(TotalQty, price, lotSizeMinQty, minNotional)
+					if err != nil {
+						return &proto.ClosePositionRespond{}, nil
+					}
+					for {
+						clientOrderId, err = wrapper.SellMarket(market, amount)
+						if err != nil {
+							fmt.Println(err)
+							return &proto.ClosePositionRespond{}, err
+						}
+						if clientOrderId != "" {
+							break
+						}
+					}
+					profit := (price - bot.AvgPrice) * TotalQty
+					fmt.Println("Profit: " + fmt.Sprint(profit))
+					select {
+					case _, ok := <-bot.ClosePosition:
+						if ok {
+						} else {
+							fmt.Println("Channel closed!")
+						}
+					default:
+						fmt.Println("No value ready, moving on.")
+					}
+					bot.ClosePosition <- true
 				} else {
-					fmt.Println("Channel closed!")
+					return &proto.ClosePositionRespond{}, nil
 				}
-			default:
-				fmt.Println("No value ready, moving on.")
+
+			} else {
+
 			}
-			bot.ClosePosition <- true
+
+			resp := &proto.ClosePositionRespond{
+				Timestamp: time.Now().String(),
+				Content:   clientOrderId,
+				Botactive: false,
+			}
+
+			return resp, nil
 		} else {
 			return &proto.ClosePositionRespond{}, nil
 		}
-
 	} else {
-
+		return &proto.ClosePositionRespond{}, nil
 	}
-
-	resp := &proto.ClosePositionRespond{
-		Timestamp: time.Now().String(),
-		Content:   clientOrderId,
-		Botactive: false,
-	}
-
-	return resp, nil
 }
 
 func main() {
@@ -638,6 +681,7 @@ func main() {
 		SpotManager: func(bots map[string]map[string]map[string]strategies.SpotBotStrategy) error {
 			var err error
 
+			//count := 0
 			copy_bots := bots
 			for err == nil {
 				wait1 := sync.WaitGroup{}
@@ -659,6 +703,7 @@ func main() {
 								//fmt.Println(sd)
 
 								if sd {
+									//if count == 10 && s == "BTCUSDT" {
 									//delete(symbols, symbol)
 									id = i
 									exch = e
@@ -696,6 +741,7 @@ func main() {
 				//<-done1
 
 				//fmt.Println("-----------------------")
+				//count++
 				time.Sleep(time.Second * 5)
 			}
 
@@ -820,6 +866,8 @@ func main() {
 									botInfo.m_type = value
 								case "withdraw_spot":
 									botInfo.withdraw_spot = value
+								case "cover_position":
+									botInfo.cover_position = value
 								}
 								//fmt.Println(key.String(), value)
 							case bool:
@@ -852,7 +900,7 @@ func main() {
 						//}, firestore.MergeAll)
 					}
 					//fmt.Println(bot)
-					//fmt.Println(botInfo)
+					//fmt.Println(botInfo.quantity)
 
 					var wrapper exchanges.ExchangeWrapper
 					if botInfo.exchange == "binance" {
@@ -884,6 +932,7 @@ func main() {
 						botInfo.drop_percent,
 						botInfo.go_up_percent,
 						botInfo.cycle_type,
+						botInfo.cover_position,
 						user.Id,
 						user.Name,
 						botInfo.order_id_list,

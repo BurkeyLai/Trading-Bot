@@ -51,7 +51,8 @@ message BotInfo {
     string modelname = 3;
     string avgprice = 4;
     string symbolbalance = 5;
-    repeated string orderidlist = 6;
+    string quantity = 6;
+    repeated string orderidlist = 7;
 }
 
 message MarketInfoRequest {
@@ -79,6 +80,7 @@ message CreateOrderRequest {
     string maxdrawdown = 10;
     string withdrawspot = 11;
     string quantity = 12;
+    string coverposition = 13;
 }
 
 message CreateOrderRespond {

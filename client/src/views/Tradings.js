@@ -63,6 +63,7 @@ const Tradings = ({ client }) => {
     //const [selectedSymbol2, setSelectedSymbol2] = useState('');
     const [selectedLeverage, setSelectedLeverage] = useState('1');
     const [maxDrawdown, setMaxDrawdown] = useState('');
+    const [coverPosition, setCoverPosition] = useState('1');
     const [maxAmount, setMaxAmount] = useState(0);
     const [future, setFuture] = useState(false);
     const [newTrading, setNewTrading] = useState(false);
@@ -188,75 +189,54 @@ const Tradings = ({ client }) => {
         req.setMaxdrawdown(maxDrawdown);
         req.setWithdrawspot('');
         req.setQuantity(maxAmount.toString());
+        req.setCoverposition(coverPosition);
         client.createOrder(req, null, (err, resp) => {
-          console.log(resp.getContent())
-          //console.log(resp.getOrderid())
-          if (resp.getBotactive()) {
-            if (userRef != null) { 
-              const storeBots = async () => {
-                userSnap = await getDoc(userRef);
-                if (userSnap.exists) {
-                  const strs = req.getSymbol().split('/');
-                  const obj = {
-                    bot_active : resp.getBotactive(),
-                    mode : req.getMode(),
-                    drop_percent : req.getDroppercent(),
-                    go_up_percent : req.getGouppercent(),
-                    exchange : req.getExchange().toLowerCase(),
-                    m_type : req.getType(),
-                    symbol : strs[0] + strs[1],
-                    symbol_balance : '',
-                    cycle_type : req.getCycletype(),
-                    leverage : req.getLeverage(),
-                    max_drawdown : req.getMaxdrawdown(),
-                    withdraw_spot : req.getWithdrawspot(),
-                    quantity : req.getQuantity(),
-                    average_price: '',
-                    order_id_list: []
-                  };
-                  if (userSnap.get("bots_array")) {
-                    var arr = userSnap.get("bots_array");
-                    arr = [...arr, obj]
-                    setDoc(userRef, {
-                      'bots_array': arr
-                    }, { merge: true });
-                  } else {
-                    setDoc(userRef, {
-                      'bots_array': [obj]
-                    }, { merge: true });
-                  }
-                }
-                /*
-              setDoc(userRef, 
-              { [req.getExchange().toLowerCase()] : 
-                { [req.getMode()] : 
-                  { [strs[0] + strs[1]] : 
-                    {
+          if (resp != null) {
+            console.log(resp.getContent())
+            //console.log(resp.getOrderid())
+            if (resp.getBotactive()) {
+              if (userRef != null) { 
+                const storeBots = async () => {
+                  userSnap = await getDoc(userRef);
+                  if (userSnap.exists) {
+                    const strs = req.getSymbol().split('/');
+                    const obj = {
                       bot_active : resp.getBotactive(),
                       mode : req.getMode(),
                       drop_percent : req.getDroppercent(),
                       go_up_percent : req.getGouppercent(),
                       exchange : req.getExchange().toLowerCase(),
-                      type : req.getType(),
-                      symbol : req.getSymbol(),
+                      m_type : req.getType(),
+                      symbol : strs[0] + strs[1],
+                      symbol_balance : '',
                       cycle_type : req.getCycletype(),
                       leverage : req.getLeverage(),
                       max_drawdown : req.getMaxdrawdown(),
                       withdraw_spot : req.getWithdrawspot(),
                       quantity : req.getQuantity(),
                       average_price: '',
-                      order_id_list: []
-                    } 
-                  } 
-                } 
-              }, { merge: true });
-              */
-                return '儲存成功'
-              }
+                      order_id_list: [],
+                      cover_position: req.getCoverposition()
+                    };
+                    if (userSnap.get("bots_array")) {
+                      var arr = userSnap.get("bots_array");
+                      arr = [...arr, obj]
+                      setDoc(userRef, {
+                        'bots_array': arr
+                      }, { merge: true });
+                    } else {
+                      setDoc(userRef, {
+                        'bots_array': [obj]
+                      }, { merge: true });
+                    }
+                  }
+                  return '儲存成功'
+                }
 
-              storeBots().then((res) => {
-                console.log(res);
-              });
+                storeBots().then((res) => {
+                  console.log(res);
+                });
+              }
             }
           }
         });
@@ -384,6 +364,7 @@ const Tradings = ({ client }) => {
                   arr[i].average_price = info.getAvgprice();
                   arr[i].order_id_list = info.getOrderidlistList();
                   arr[i].symbol_balance = info.getSymbolbalance();
+                  arr[i].quantity = info.getQuantity();
                   setDoc(userRef, {
                     'bots_array': arr
                   }, { merge: true });
@@ -620,6 +601,7 @@ const Tradings = ({ client }) => {
                     dtlLeverage: arr[i].leverage,
                     dtlCycle: (arr[i].cycle_type == 'single') ? '單次循環' : '循環做單',
                     dtlMaxDrawdown: arr[i].max_drawdown,
+                    dtlCoverPosition: arr[i].cover_position,
                     dtlQty: arr[i].quantity,
                     dtlDrop: (parseFloat(arr[i].drop_percent, 10) * 100).toString(),
                     dtlGoUp: (parseFloat(arr[i].go_up_percent, 10) * 100).toString(),
@@ -828,7 +810,7 @@ const Tradings = ({ client }) => {
                   <Row form>
                     <Col md="6" className="form-group">
                       <strong className="text-muted d-block mb-2">
-                        幣種一
+                        幣種
                       </strong>
                       <div>
                         <InputGroup className="mb-2">
@@ -847,24 +829,17 @@ const Tradings = ({ client }) => {
                       </div>
                     </Col>
                     <Col md="6" className="form-group">
-                      {/*<strong className="text-muted d-block mb-2">
-                        幣種二
+                      <strong className="text-muted d-block mb-2">
+                        補倉策略
                       </strong>
                       <div>
                         <InputGroup className="mb-2">
-                          <FormSelect onChange={evt => {setSelectedSymbol2(evt.target.value)}}>
-                            {
-                              symbolArray2.map((s, i) => {
-                                return (<option key={i}>{s}</option>);
-                              })
-                            }
-                          </FormSelect>
-                          <FormInput value={selectedSymbol2Ratio} onChange={evt => {setSelectedSymbol2Ratio(evt.target.value)}}/>
+                          <FormInput placeholder="1 ~ 2" value={coverPosition} onChange={evt => {setCoverPosition((parseFloat(evt.target.value, 10) > 2.0) ? '2' : ((parseFloat(evt.target.value, 10) < 1.0) ? '1' : evt.target.value))}}/>
                           <InputGroupAddon type="append">
-                            <InputGroupText>%</InputGroupText>
+                            <InputGroupText>{(coverPosition == '') ? '' : parseFloat(coverPosition, 10) * 100} %</InputGroupText>
                           </InputGroupAddon>
                         </InputGroup>
-                          </div>*/}
+                      </div>
                     </Col>
                   </Row>
 
@@ -1042,7 +1017,10 @@ const Tradings = ({ client }) => {
                     最大回撤
                   </th>
                   <th scope="col" className="border-0">
-                    首單金額
+                    補倉策略
+                  </th>
+                  <th scope="col" className="border-0">
+                    下單金額
                   </th>
                   <th scope="col" className="border-0">
                     偵測％
@@ -1064,6 +1042,7 @@ const Tradings = ({ client }) => {
                         <td>{s.dtlLeverage}</td>
                         <td>{s.dtlCycle}</td>
                         <td>{s.dtlMaxDrawdown}</td>
+                        <td>{s.dtlCoverPosition}</td>
                         <td>{s.dtlQty}</td>
                         <td>{s.dtlDrop}</td>
                         <td>{s.dtlGoUp}</td>
