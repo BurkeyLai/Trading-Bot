@@ -138,7 +138,7 @@ const Tradings = ({ client }) => {
           if (resp) {
             console.log(resp.getContent())
             if (resp.getContent() != '') {
-              shutDownBot(symbol);
+              //shutDownBot(symbol);
               Toast('success', true, "平倉成功");
             }
           }
