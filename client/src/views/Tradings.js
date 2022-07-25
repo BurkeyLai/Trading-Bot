@@ -519,7 +519,7 @@ const Tradings = ({ client }) => {
 
     useEffect(() => {
       let isMounted = true;
-      if (isMounted && user.getId() !== '') {
+      if (isMounted && user.getId() !== '' && orderIdName != '請選擇') {
         const req = new OrderInfoRequest();
         msg.setContent("Ask for order information...");
         msg.setTimestamp(new Date().toLocaleTimeString());

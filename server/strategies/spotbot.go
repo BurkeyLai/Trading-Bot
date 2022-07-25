@@ -38,7 +38,7 @@ type SpotBotStrategy struct {
 	UserId         string
 	CycleType      string
 	Model          StrategyModel
-	OpenPrice      float64
+	OpenQty        float64
 	AvgPrice       float64
 	Qty            float64
 	ActivePercent  float64
@@ -220,7 +220,11 @@ func (s SpotBotStrategy) DeleteBotInfo(exch string) {
 							}
 						}
 					}
-					bots_array = append(t[:delete_idx], t[delete_idx+1:]...)
+					if delete_idx == len(t)-1 {
+						bots_array = append(t[:delete_idx])
+					} else {
+						bots_array = append(t[:delete_idx], t[delete_idx+1:]...)
+					}
 					s.Doc.Set(ctx, map[string]interface{}{
 						"bots_array": bots_array,
 					}, firestore.MergeAll)
@@ -376,7 +380,6 @@ func (s SpotBotStrategy) Apply(wrappers []exchanges.ExchangeWrapper, markets []*
 			}
 			if id != "" {
 				fmt.Println("有")
-				s.OpenPrice = s.AvgPrice
 				s.Qty = s.Qty * s.CoverPosition
 				s.OrderIdList = append(s.OrderIdList, id)
 			} else {
@@ -412,7 +415,7 @@ func (s SpotBotStrategy) Apply(wrappers []exchanges.ExchangeWrapper, markets []*
 		if err != nil && hasErrorFunc {
 			s.Model.OnError(err)
 		}
-
+		s.Online = false
 		//fmt.Println(s.Model.Name)
 		terminate := false
 		select {
@@ -455,9 +458,6 @@ func (s SpotBotStrategy) Apply(wrappers []exchanges.ExchangeWrapper, markets []*
 					return ""
 				}(last_lastPrice_low, lastPrice, s.AvgPrice, s.ReversePercent)
 				if id != "" {
-					if len(s.OrderIdList) == 0 {
-						s.OpenPrice = s.AvgPrice
-					}
 					s.Qty = s.Qty * s.CoverPosition
 					s.OrderIdList = append(s.OrderIdList, id)
 					s.AvgPrice, err = s.UpdateAvgPrice(wrappers[0], market)
@@ -481,17 +481,8 @@ func (s SpotBotStrategy) Apply(wrappers []exchanges.ExchangeWrapper, markets []*
 					return ""
 				}(last_lastPrice_high, lastPrice, s.AvgPrice, s.ReversePercent)
 				if id != "" {
-					if len(s.OrderIdList) == 0 {
-						s.OpenPrice = s.AvgPrice
-					}
 					s.OrderIdList = append(s.OrderIdList, id)
 					profit, _ := s.CalculateProfit(s.AvgPrice, lastPrice, id, wrappers[0])
-					s.AvgPrice, err = s.UpdateAvgPrice(wrappers[0], market)
-					if err != nil {
-						fmt.Println(err)
-						isShutDown = true
-					}
-					last_lastPrice_high = s.AvgPrice
 					s.OrderIdList = nil
 					s.UpdateBotInfo("Update Bot Info!", wrappers[0].Name(), market.Balance)
 					if s.CycleType == "single" {
@@ -509,11 +500,14 @@ func (s SpotBotStrategy) Apply(wrappers []exchanges.ExchangeWrapper, markets []*
 						//s.ShutDown <- true
 						//break
 					} else {
+						s.Qty = s.OpenQty
+						s.AvgPrice = lastPrice
+						last_lastPrice_low = s.AvgPrice
+						last_lastPrice_high = s.AvgPrice
 						fmt.Println("Profit: " + fmt.Sprint(profit))
 					}
 				}
 			}
-
 		}
 
 		if lastPrice < last_lastPrice_low {

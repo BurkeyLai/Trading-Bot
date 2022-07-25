@@ -364,13 +364,14 @@ func (s *Server) LaunchBot(
 			bot.ActivePercent, _ = strconv.ParseFloat(dropPercent, 64)
 			//bot.DropPercent = 0.0001
 			bot.ReversePercent, _ = strconv.ParseFloat(goUpPercent, 64)
+			bot.OpenQty = quantity
 			bot.Qty = quantity
 			if online {
 				bot.Stream = *stream
 			} else {
 				bot.OrderIdList = orderList
-				bot.Doc = doc
 			}
+			bot.Doc = doc
 			bot.Market = m1
 			bot.Online = online
 			bot.ClosePosition = make(chan bool, 1)
@@ -470,7 +471,7 @@ func (s *Server) CreateOrder(ctx context.Context, req *proto.CreateOrderRequest)
 				true,
 				m1,
 				&conn.stream,
-				nil)
+				s.Firestore.Collection("User").Doc(userId))
 			resp.Content = content
 			if err != nil {
 				return resp, err
