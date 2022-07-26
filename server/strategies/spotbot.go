@@ -484,7 +484,8 @@ func (s SpotBotStrategy) Apply(wrappers []exchanges.ExchangeWrapper, markets []*
 					s.OrderIdList = append(s.OrderIdList, id)
 					profit, _ := s.CalculateProfit(s.AvgPrice, lastPrice, id, wrappers[0])
 					s.OrderIdList = nil
-					s.UpdateBotInfo("Update Bot Info!", wrappers[0].Name(), market.Balance)
+					s.Qty = s.OpenQty
+					s.AvgPrice = lastPrice
 					if s.CycleType == "single" {
 						fmt.Println("Profit: " + fmt.Sprint(profit))
 						isShutDown = true
@@ -500,12 +501,11 @@ func (s SpotBotStrategy) Apply(wrappers []exchanges.ExchangeWrapper, markets []*
 						//s.ShutDown <- true
 						//break
 					} else {
-						s.Qty = s.OpenQty
-						s.AvgPrice = lastPrice
 						last_lastPrice_low = s.AvgPrice
 						last_lastPrice_high = s.AvgPrice
 						fmt.Println("Profit: " + fmt.Sprint(profit))
 					}
+					s.UpdateBotInfo("Sell and Update Bot Info!", wrappers[0].Name(), market.Balance)
 				}
 			}
 		}

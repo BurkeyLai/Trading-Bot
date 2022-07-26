@@ -591,8 +591,8 @@ const Tradings = ({ client }) => {
               var arr = userSnap.get("bots_array");
               var updateArray = [];
               for (var i = 0; i < arr.length; ++i) {
-                if (i == data.brfIdx && arr[i].order_id_list != null) {
-                  const l = arr[i].order_id_list.length;
+                if (i == data.brfIdx /*&& arr[i].order_id_list != null*/) {
+                  const l = (arr[i].order_id_list != null) ? arr[i].order_id_list.length : 0;
                   const tbl = 
                   {
                     dtlIdx: i,
@@ -611,7 +611,11 @@ const Tradings = ({ client }) => {
                   };
                   updateArray = [...updateArray, tbl];
 
-                  setOrderIdArray(['請選擇', ...arr[i].order_id_list]);
+                  if (arr[i].order_id_list != null) {
+                    setOrderIdArray(['請選擇', ...arr[i].order_id_list]);
+                  } else {
+                    setOrderIdArray(['請選擇']);
+                  }
                   break;
                 }
               }
